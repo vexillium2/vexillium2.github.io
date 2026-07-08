@@ -212,10 +212,12 @@ doc/**/*.pdf
 
 - `git status --ignored`：可查看是否隐藏了文件。
 
-发现误提交的处理：
+希望删除文件、发现误提交的处理：
 
 ```Plain Text
-git rm --cached *.db *.db-wal # 从暂存区移除（保留在工作区）
+git rm 1001.log # 从磁盘和暂存区移除
+git rm --cached *.db *.db-wal # 从暂存区移除，不移除磁盘
+git rm --force 1001.log # 从磁盘和暂存区移除
 ```
 
 查看详细修改位置

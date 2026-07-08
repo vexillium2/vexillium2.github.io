@@ -1,5 +1,13 @@
-# 数据库学习笔记
-
+---
+lang: zh-CH
+title: 数据库学习笔记
+description: 数据库概论、MySQL、数据库开发
+date: 2024-3-20
+category:
+  - 后端开发
+tag:
+  - 数据库
+---
 ## 数据库概论
 
 
@@ -2067,8 +2075,6 @@ Q：2000万的数据导入到excel并返回给用户怎么做？
 
 A：excel一个文件最多只有100w行的数据，所以2000w数据要分成20个excel数据，最后再做压缩
 
-
-
 ## MySQL
 
 ### 术语解释与关键字
@@ -3453,26 +3459,9 @@ mysqlshow -uroot-p2143 test_db test_tbl     --count
 
 5. mysqldump
 
-
-
-
-
-
-
 ## 监控运维
 
-
-
-
-
-
-
-
-
-
-
 ## 实操问题记录
-
 
 
 ### 数据库选型
@@ -3510,12 +3499,6 @@ mysqlshow -uroot-p2143 test_db test_tbl     --count
 
 
 - 名称 `title` `name`
-
-    
-
-    
-
-    
 
 ## JDBC
 
@@ -3592,12 +3575,6 @@ try {
 来源：稀土掘金
 
 著作权归作者所有。商业转载请联系作者获得授权，非商业转载请注明出处。
-
-
-
-
-
-
 
 ## 数据库连接池 DBCP
 

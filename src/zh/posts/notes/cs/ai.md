@@ -1,9 +1,15 @@
-
-# 人工智能学习笔记
+---
+lang: zh-CH
+title: 人工智能学习笔记
+description: 人工智能数学、编程、理论
+date: 2024-6-19
+category:
+  - 数学
+tag:
+  - 人工智能
+---
 
 > LLM与Agent的区别: Agent=LLM\+Tools
-> 
-> 
 
 https://scnajei2ds6y\.feishu\.cn/wiki/XdeBwWZi7iSxMJkXh6qcCmPWnqZ
 
@@ -26,8 +32,6 @@ https://scnajei2ds6y\.feishu\.cn/wiki/XdeBwWZi7iSxMJkXh6qcCmPWnqZ
 ![Image](https://internal-api-drive-stream.feishu.cn/space/api/box/stream/download/authcode/?code=OWIwYzgyY2NkMGZiYTg4ZDgzMTcyNTdjYjcwZDkyYmZfYWNhMTg4YjhlMmExNDU1ZDVmM2E0OTBmNGMyZTc1OGZfSUQ6NzU4MTA0MDAxNTc2NjI5MzcyMl8xNzgzMzIzMjIxOjE3ODM0MDk2MjFfVjM)
 
 小批量随机梯度下降SGD，是从数据集中随机抽取的一个小批量，然后根据参数计算损失的梯度，再朝着减少损失的方向更新我们的参数。
-
-
 
 ### 概率论
 

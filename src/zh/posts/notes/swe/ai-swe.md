@@ -1,4 +1,13 @@
-# AI应用开发笔记
+---
+lang: zh-CH
+title: AI应用开发笔记
+description: LLM基础、RAG到Harness Engineering
+date: 2025-7-19
+category:
+  - 后端开发
+tag:
+  - 人工智能
+---
 
 ## 大模型基本框架
 

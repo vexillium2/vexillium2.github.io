@@ -4,6 +4,8 @@ category:
   - Guide
 tag:
   - encryption
+
+article: false
 ---
 
 # Encryption Article

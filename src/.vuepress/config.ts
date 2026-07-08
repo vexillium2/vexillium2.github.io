@@ -8,7 +8,7 @@ export default defineUserConfig({
 
   locales: {
     "/": {
-      lang: "en-US",
+      lang: "zh-CN",
       title: "Vexilog",
       description: "Vexillium's blog",
     },
@@ -16,6 +16,11 @@ export default defineUserConfig({
       lang: "zh-CN",
       title: "Vexilog",
       description: "Vexillium 的博客",
+    },
+    "/en/": {
+      lang: "en-US",
+      title: "Vexilog",
+      description: "Vexillium's blog",
     },
   },
 

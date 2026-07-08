@@ -1,4 +1,13 @@
-# 工作与工具使用
+---
+lang: zh-CH
+title: 工作流与工具使用
+description: SOP沉淀、SWE的工作技能
+date: 2026-1-2
+category:
+  - 后端开发
+tag:
+  - SOP
+---
 
 ## 工作内容
 

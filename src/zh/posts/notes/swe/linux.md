@@ -1,4 +1,12 @@
-# Linux学习笔记
+---
+lang: zh-CH
+title: Linux学习笔记
+description: Linux课程笔记，指令、工程、操作系统
+date: 2023-4-9
+category:
+  - 后端开发
+tag:
+---
 
 ## 一、从基础命令到实战命令
 

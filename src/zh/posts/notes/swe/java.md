@@ -2,8 +2,12 @@
 lang: zh-CH
 title: Java 学习笔记
 description: 从语法到JVM到设计模式，我的Java开发手册
+date: 2023-11-22
+category:
+  - 后端开发
+tag:
+  - 编程语言
 ---
-# Java学习笔记
 
 MES开源系统
 

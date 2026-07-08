@@ -17,6 +17,7 @@ tag:
   - Page config
   - Guide
 # this page is sticky in article list
+article: false
 sticky: true
 # this page will appear in starred articles
 star: true

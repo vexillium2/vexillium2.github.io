@@ -1,4 +1,13 @@
-# Python 规范、语法糖与常用库
+---
+lang: zh-CH
+title: Python 学习笔记
+description: Python 规范、语法糖与常用库
+date: 2025-8-22
+category:
+  - 后端开发
+tag:
+  - 编程语言
+---
 
 ## Python规范
 

@@ -1,4 +1,13 @@
-# 中间件笔记
+---
+lang: zh-CH
+title: 中间件学习笔记
+description: 缓存、消息队列
+date: 2024-5-2
+category:
+  - 后端开发
+tag:
+  - 软件
+---
 
 ## 缓存
 

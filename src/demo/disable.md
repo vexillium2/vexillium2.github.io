@@ -10,6 +10,7 @@ tag:
 navbar: false
 sidebar: false
 
+article: false
 breadcrumb: false
 pageInfo: false
 contributors: false
