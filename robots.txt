@@ -1,0 +1,4 @@
+User-agent:*
+Disallow:
+
+Sitemap: https://vexillium2.github.io/sitemap.xml
