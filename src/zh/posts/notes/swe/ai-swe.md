@@ -11,7 +11,6 @@ tag:
 
 ## 大模型基本框架
 
-### Transformer 架构
 
 Transformer 是目前主流 LLM 的核心基础，于 2017 年在《Attention Is All You Need》中提出，完全基于注意力机制，不依赖 RNN 或 CNN。
 
@@ -458,13 +457,6 @@ Anthropic 在 2024 年底提出的开放标准协议，解决 AI 工具生态碎
 
 - **WebSocket**：双向实时通信
 
-### vs 传统 Function Calling
-
-||传统 Function Calling|MCP|
-|---|---|---|
-|定义范围|单应用内|跨应用、跨模型|
-|服务发现|手动配置|标准化声明|
-|生态互操作|低|高（行业标准趋势）|
 
 ---
 
