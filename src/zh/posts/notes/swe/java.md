@@ -1018,8 +1018,7 @@ public @interface MyAnnotation {
 
 // 获得 Hello 接口的 morning 实例
 
-// 
-
+```Java
 import java\.lang\.reflect\.Proxy;
 
 
@@ -1059,7 +1058,7 @@ return null;
 \}
 
 \}
-
+```
 注意其中的`invoke()`,当你通过代理对象proxy调用方法method时，调用会被自动转发到 invoke 方法中。
 
 public Object invoke\(Object proxy, Method method, Object\[\] args\) throws Throwable \{

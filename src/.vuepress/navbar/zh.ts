@@ -41,7 +41,7 @@ function getAllChildren(
     children: getChildren(join(basePath, subdir)),
   }));
 }
-const basePath = resolve(__dirname, "../../zh/posts");
+const basePath = resolve(__dirname, "../../zh/posts/notes");
 
 const subdirectories = getSubdirectories(basePath);
 
