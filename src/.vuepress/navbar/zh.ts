@@ -52,7 +52,7 @@ export const zhNavbar = navbar([
   {
     text: "学习笔记",
     icon: "pen-to-square",
-    prefix: "/zh/posts/notes/swe",
+    prefix: "/zh/posts/notes/",
     children: allChildren
   }
 ]);

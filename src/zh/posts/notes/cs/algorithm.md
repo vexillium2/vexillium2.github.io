@@ -2,7 +2,7 @@
 lang: zh-CH
 title: 算法学习笔记
 description: 算法笔记、模版、思考
-date: 2023-2-20
+date: 2023-02-20
 category:
   - 数学
 tag:

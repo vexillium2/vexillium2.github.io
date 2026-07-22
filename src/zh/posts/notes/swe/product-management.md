@@ -2,7 +2,7 @@
 lang: zh-CH
 title: 产品与软件项目笔记
 description: 产品经理知识库
-date: 2024-5-2
+date: 2024-05-02
 category:
   - 产品经理
 tag:

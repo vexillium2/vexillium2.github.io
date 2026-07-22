@@ -2,7 +2,7 @@
 lang: zh-CH
 title: 人工智能学习笔记
 description: 人工智能数学、编程、理论
-date: 2024-6-19
+date: 2024-06-19
 category:
   - 数学
 tag:

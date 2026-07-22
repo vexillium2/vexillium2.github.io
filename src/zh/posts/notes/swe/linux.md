@@ -2,10 +2,11 @@
 lang: zh-CH
 title: Linux学习笔记
 description: Linux课程笔记，指令、工程、操作系统
-date: 2023-4-9
+date: 2023-04-09
 category:
   - 后端开发
 tag:
+  - 命令
 ---
 
 ## 一、从基础命令到实战命令

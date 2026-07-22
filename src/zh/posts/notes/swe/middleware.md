@@ -2,7 +2,7 @@
 lang: zh-CH
 title: 中间件学习笔记
 description: 缓存、消息队列
-date: 2024-5-2
+date: 2024-05-02
 category:
   - 后端开发
 tag:

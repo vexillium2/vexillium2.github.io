@@ -2,7 +2,7 @@
 lang: zh-CH
 title: 数据库学习笔记
 description: 数据库概论、MySQL、数据库开发
-date: 2024-3-20
+date: 2024-03-20
 category:
   - 后端开发
 tag:

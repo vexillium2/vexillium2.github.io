@@ -2,7 +2,7 @@
 lang: zh-CH
 title: 测试与部署运维
 description: 部署、测试、bug记录
-date: 2025-8-10
+date: 2025-08-10
 category:
   - 后端开发
 tag:

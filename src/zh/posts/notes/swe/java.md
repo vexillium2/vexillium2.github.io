@@ -1097,15 +1097,45 @@ Serializer s = mySpiFactory\.get\(type\); // 自动加载 JsonSerializer
 
 ### 泛型
 
-> 泛型就是定义一种模板，由编译器javac针对类型作检查并安全强制转换（擦拭法），虚拟机一无所知，所有类型其实是Object
-> 
-> 
+> 在复杂的企业级应用开发中，类型安全与代码复用是架构设计的核心诉求。泛型（Generics）的引入正是为了解决这一痛点，它允许开发者在定义类、接口或方法时，将类型本身作为一种参数进行传递。这种机制不仅消除了大量强制类型转换的冗余代码，更重要的是将类型检查从运行时提前到了编译期，从而在代码执行前就能拦截潜在的类型安全隐患。
+
+在Java中，泛型就是定义一种模板，由编译器javac针对类型作检查并安全强制转换（擦拭法），虚拟机一无所知，所有类型其实是Object。
 
 #### 泛型定义
 
-一个类中部分泛型方法不用定义泛型类，有泛型字段必须要用泛型类，只有声明了才能使用泛型
+泛型的核心思想是“类型参数化”，它本质上是一个编译期的类型模板。在声明泛型类或方法时，我们使用占位符（如 T、K、V）来代表未知的数据类型。当存在多个类型参数时，可以通过 <K, V> 或 <K, V, T> 的形式进行声明，以支持更复杂的数据结构映射。
 
-`T` 匹配任意一种数据结构，当需要多个泛型类型时可用`<K, V>`, `<K, V, T>` 
+在实际工程实践中，泛型的使用场景需要严格区分：如果一个类中存在泛型字段，那么该类必须被声明为泛型类，因为只有类级别的泛型声明才能让字段共享该类型参数；反之，如果仅仅是某个方法内部需要处理动态类型，且该类型不依赖于类的实例状态，则完全可以直接定义泛型方法，而无需将整个类泛型化。这种细粒度的控制是保持API简洁性的关键。
+
+泛型类：
+
+```Java
+public class Student<T, K, V, E> {
+    private T node;
+    private Map<K, V>;
+    private List<E> config;
+
+    public Student(K id, V name) {
+        super();
+        this.id = id;
+        this.name = name;
+    }
+
+    public static void main(String[] args) {
+        Student<Integer, String> student = new Student<Integer, String>(1001, "tom");
+        System.out.println(student.id);
+        System.out.println(student.name);
+        Student<String, String> student2 = new Student<String, String>("s1001", "tom");
+        System.out.println(student2.id);
+        System.out.println(student2.name);
+    }
+```
+
+泛型接口：
+
+```Java
+
+```
 
 #### 泛型原理
 
@@ -1113,7 +1143,7 @@ Serializer s = mySpiFactory\.get\(type\); // 自动加载 JsonSerializer
 
 因此，\<T\>实际类型为Object，不能为基本类型，且无法取得带泛型的Class，就是说无论`T`的类型是什么`getClass()`只会返回唯一的`className.class`
 
-另外，`Class<T>`的`T`不能实例化（此时new T\(\) 等于 new Object\(\)）必须传入`class<T> clazz`通过反射来实例化
+另外，`Class<T>`的`T`不能实例化（此时 `new T()` 等于 `new Object()` ）必须传入`class<T> clazz`通过反射来实例化
 
 #### 区分
 

@@ -2,7 +2,7 @@
 lang: zh-CH
 title: AI应用开发笔记
 description: LLM基础、RAG到Harness Engineering
-date: 2025-7-19
+date: 2025-07-19
 category:
   - 后端开发
 tag:
@@ -632,6 +632,7 @@ https://platform\.deepseek\.com/
 GLM
 
 Kimi
+- 
 
 ## 主流Agent 框架
 

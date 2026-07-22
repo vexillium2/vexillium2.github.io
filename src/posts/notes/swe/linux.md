@@ -1,3 +1,8 @@
+---
+lang: zh-CH
+title: Java 学习笔记
+description: 从语法到JVM到设计模式，我的Java开发手册
+---
 # Linux学习笔记
 
 ## 一、从基础命令到实战命令
