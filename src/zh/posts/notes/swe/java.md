@@ -1133,11 +1133,76 @@ public class Student<T, K, V, E> {
 
 泛型接口：
 
-```Java
+1. 定义泛型接口
 
+```Java
+import java.util.List;
+
+public interface IBaseDao<K, T> {
+
+    public List<T> getAll();
+
+    public T queryById(K k);
+
+    public int add(T t);
+
+    public int update(T t);
+
+    public int delete(K k);
+}
 ```
 
+2. 定义具体接口
+
+```Java
+public interface EmployeeDao extends IBaseDao<Integer,Employee> {
+
+}
+
+public interface DeptDao extends IBaseDao<Integer, Dept> {
+    long getCount() throws SQLException;
+}
+```
+
+3. 定义实现类
+```Java
+public class EmployDaoImpl implements EmployeeDao{
+
+    @Override
+    public List<Employee> getAll() {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public Employee queryById(Integer k) {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public int add(Employee t) {
+        // TODO Auto-generated method stub
+        return 0;
+    }
+
+    @Override
+    public int update(Employee t) {
+        // TODO Auto-generated method stub
+        return 0;
+    }
+
+    @Override
+    public int delete(Integer k) {
+        // TODO Auto-generated method stub
+        return 0;
+    }
+
+}
+```
 #### 泛型原理
+
+Java语言的泛型实现方式是擦拭法（Type Erasure）。
 
 `class ClassName<T> { ... }` 把一个类T变成模板，内部所有T被替换为传入的数据结构，填写后泛型接口变为强类型，不填时把\<T\>作为Object使用
 
