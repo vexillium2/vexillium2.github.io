@@ -223,7 +223,7 @@ HashSet底层是基于 `HashMap` 实现的，其中元素作为 `HashMap` 的键
 
 **1\. for\-each 循环（最常用）**
 
-```Java
+```java
 Set<String> set = new HashSet<>(Arrays.asList("a", "b", "c"));
 for (String s : set) {
     System.out.println(s);
@@ -232,7 +232,7 @@ for (String s : set) {
 
 **2\. Iterator 迭代器（可安全删除元素）**
 
-```Java
+```java
 Iterator<String> it = set.iterator();
 while (it.hasNext()) {
     String s = it.next();
@@ -243,7 +243,7 @@ while (it.hasNext()) {
 
 **3\. Stream / forEach（Java 8\+）**
 
-```Java
+```java
 set.forEach(System.out::println);
 // 带过滤
 set.stream().filter(s -> s.startsWith("a")).forEach(System.out::println);
@@ -267,7 +267,7 @@ set.stream().filter(s -> s.startsWith("a")).forEach(System.out::println);
 
 自创集合类（结构体）
 
-```Java
+```java
 class X implements Comparable<X> {
    int w;
    public int compareTo(Edgs o){
@@ -314,7 +314,7 @@ map.forEach((key, value) -> {
 
 更新Map的元素
 
-```Java
+```java
 if (map.containsKey(curr_sum - k)) {                 
     count += map.get(curr_sum - k);             
 }
@@ -547,7 +547,7 @@ return p1\.score \> p2\.score ? \-1 : 1;
 
 用于一个父类仅作为告知子类方法签名不实现具体逻辑，无法被实例化，作用是定义接口规范（抽象类 x = new 具体子类\(\);）方便使用多态特性，只提供方法签名让子类覆写，子类可以继续定义新方法，可能出现子类的方法反而抽象类 x调用不了
 
-```Java
+```java
 abstract class Person {
     private int size;
     public abstract void xx();
@@ -566,7 +566,7 @@ abstract class Person {
 
 下面是ArrayList接口：
 
-```Java
+```java
 public class ArrayList<E> extends AbstractList<E>
         implements List<E>, RandomAccess, Cloneable, java.io.Serializable
 {
@@ -578,7 +578,7 @@ public class ArrayList<E> extends AbstractList<E>
 
 每个枚举值都是class实例且唯一，构造方法为`private`无法被new
 
-```Java
+```java
 //可以设置枚举类字段（写出default构造函数）
 
 // getter 方法
@@ -812,7 +812,7 @@ JVM 运行时加载class的路径，默认为当前目录，可通过`-classpath
 
 1. 下面各句话存在哪个区域？
 
-```Java
+```java
 public class Bean1 {
     public static void main(String[] args) {
         Bean bean1 = new Bean1();
@@ -838,7 +838,7 @@ public class Bean1 {
 
 2. JAVA的类加载期负责整个生命周期内的class的初始化和加载工作，就虚拟机的规范来说，以下代码会输出什么结果？
 
-```Java
+```java
 public class Test {
 
    public static void main(String[] args) {
@@ -862,11 +862,17 @@ class Test2{
 
 ### 反射
 
+> 在现代企业级软件架构中，框架与业务逻辑的解耦是保证系统可维护性与可扩展性的基石。Java 语言通过反射（Reflection）、注解（Annotation）、动态代理（Dynamic Proxy）以及 SPI（Service Provider Interface）等核心机制，赋予了程序在运行期动态感知类结构、修改对象状态以及动态生成代码的能力。这些机制共同构成了 Spring、MyBatis、Dubbo 等主流框架的底层基础设施，使得“约定优于配置”与“无侵入式增强”成为可能。
+
 反射: 在运行期，对某个实例对象一无所知的情况下，调用其方法
 
 使用库： `java.lang.reflect`
 
-#### Class
+#### 反射机制
+
+
+
+#### Class 类
 
 获取Class实例方法：
 
@@ -986,7 +992,7 @@ Java的内置注解
 
 - `@Retention(RetentionPolicy.RUNTIME)`：在运行时保留，可以通过反射读取。这是最常用的一类。
 
-```Java
+```java
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
@@ -1008,8 +1014,6 @@ public @interface MyAnnotation {
 
 - `String value() default "..."`：这定义了注解的属性。`value`是一个特殊的属性名，如果注解只有一个属性，并且属性名为 `value`，在使用时可以省略 `value=`。
 
-
-
 #### 动态代理 Dynamic Proxy
 
 不编写实现类，在运行期间创建某个interface的实例，通过`Proxy.newProxyInstance(ClassLoader, interface, handler)`创建接口对象
@@ -1020,7 +1024,7 @@ public @interface MyAnnotation {
 
 // 获得 Hello 接口的 morning 实例
 
-```Java
+```java
 import java\.lang\.reflect\.Proxy;
 
 
@@ -1109,7 +1113,7 @@ Serializer s = mySpiFactory\.get\(type\); // 自动加载 JsonSerializer
 
 泛型类：
 
-```Java
+```java
 public class Student<T, K, V, E> {
     private T node;
     private Map<K, V>;
@@ -1135,7 +1139,7 @@ public class Student<T, K, V, E> {
 
 1. 定义泛型接口
 
-```Java
+```java
 import java.util.List;
 
 public interface IBaseDao<K, T> {
@@ -1154,7 +1158,7 @@ public interface IBaseDao<K, T> {
 
 2. 定义具体接口
 
-```Java
+```java
 public interface EmployeeDao extends IBaseDao<Integer,Employee> {
 
 }
@@ -1165,7 +1169,7 @@ public interface DeptDao extends IBaseDao<Integer, Dept> {
 ```
 
 3. 定义实现类
-```Java
+```java
 public class EmployDaoImpl implements EmployeeDao{
 
     @Override
@@ -1225,13 +1229,77 @@ Java语言泛型的实现是通过“类型擦除（Type Erasure）”机制在�
 
 #### 泛型的实际例子
 
+在实际的企业级开发中，泛型的核心作用是构建高复用、强类型约束的底层抽象。以下是泛型在真实工程中的四大核心应用场景：
 
+1. 统一的数据传输与响应模型（DTO/VO）
+在前后端分离或微服务架构中，接口返回的数据结构通常是固定的，但具体的业务数据千变万化。通过泛型，我们可以定义一个通用的响应包装类，避免为每个接口重复编写包装代码。
+
+```java
+public class ApiResponse<T> {
+    private int code;
+    private String message;
+    private T data; // T 就是具体的业务数据，如 User, Order, List<Product> 等
+
+    // 提供静态工厂方法，利用泛型推断简化调用
+    public static <T> ApiResponse<T> success(T data) {
+        ApiResponse<T> response = new ApiResponse<>();
+        response.code = 200;
+        response.data = data;
+        return response;
+    }
+}
+```
+
+2. 通用仓储与数据访问层（Repository/DAO）
+在 ORM 框架（如 Spring Data JPA、MyBatis-Plus）中，泛型是构建数据访问层的基础。不同的实体类（Entity）对应不同的数据库表，但它们都需要执行增删改查操作。
+
+```java
+public interface BaseRepository<T, ID> {
+    T findById(ID id);
+    void save(T entity);
+    void deleteById(ID id);
+}
+```
+
+3. 泛型工厂与反射实例化（结合 Class）
+正如我们之前探讨过的，泛型内部无法直接 new T()，但这恰好催生了“泛型工厂”模式。在需要动态创建对象、解析配置或进行依赖注入的场景中，泛型结合反射是标准解法。
+
+```java
+public class BeanFactory {
+    // 通过传入 Class 对象，安全地实例化任意类型
+    public static <T> T createInstance(Class<T> clazz) {
+        try {
+            return clazz.getDeclaredConstructor().newInstance();
+        } catch (Exception e) {
+            throw new RuntimeException("实例化失败: " + clazz.getName(), e);
+        }
+    }
+}
+```
+
+4. 类型安全的策略与处理器（Handler/Processor）
+当我们需要设计一套可扩展的处理机制，且不同的处理器处理的数据类型完全不同时，泛型可以确保处理器内部的类型安全。
+
+```java
+public interface MessageHandler<T extends Message> {
+    void handle(T message);
+}
+
+// 具体实现时，编译器会强制约束只能处理指定类型的消息
+public class OrderMessageHandler implements MessageHandler<OrderMessage> {
+    @Override
+    public void handle(OrderMessage message) {
+        // 这里可以直接调用 message.getOrderNo()，无需向下转型
+        System.out.println("处理订单: " + message.getOrderNo());
+    }
+}
+```
 
 ### IO流 抛出IOException
 
 #### 文件File
 
-```Java
+```java
 File f = new File("C:\\Users\\Administrator\\Desktop\\test.txt");
 // 相对路径
 f.getPath();
@@ -1251,7 +1319,7 @@ f.isDirectory();
 
 #### 路径Path
 
-```Java
+```java
 Path p = Paths.get("C:\\Users\\Administrator\\Desktop\\test.txt");
 Path p2 = Paths.get(".", "project", "study");
 // 规范路径
@@ -1389,7 +1457,7 @@ Java8 以前, 实现只有一个方法（不能有构造方法）的接口,需�
 
 如`Runnable`、`Comparator`、`InvocationHandler`:
 
-```Java
+```java
 Arrays.sort(array, new Comparator<String>() {
     @Override
     public int compare(String s1, String s2) {

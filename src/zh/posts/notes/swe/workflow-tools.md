@@ -149,7 +149,7 @@ tag:
 ```Plain Text
 你是一名资深开发工程师，擅长写出流畅、富有深度的技术文档。
 我希望你能仔细设计并扩充一下下面这段文字，要求：
-- 重视叙述方式，分段要按照技术的实际情况分类，不要进行简略的举例，这样会让内容空洞，按照严谨的技术博客方向书写
+- 重视叙述方式，分段要按照技术的实际情况分类，不要进行简略的举例，这样会让内容空洞，按照严谨的技术博客方向书写，但要避免官方文档那样事无巨细与晦涩省略相关知识。
 - 不要介绍技术背后的公司、人物、年份等，可以介绍技术引入的原因、背景，注重实践实用性
 - 以markdown格式输出
 例子：
@@ -163,25 +163,141 @@ user_question:"
 
 原本JVM加载字节码文件，并创建Class实例，通过反射调用方法
 "
-ai_response:"
-运行Java的过程
-Java程序的运行并非简单的“加载即执行”，而是一个由编译器（javac）与虚拟机（JVM）精密协作的复杂生命周期。这一过程不仅涉及文件的物理流转，更包含了类在内存中的结构化重塑。
-编译期：从源码到平台无关的字节码
-一切始于.java源码文件。在编译阶段，javac编译器首先进行词法与语法分析，将代码解析为抽象语法树，随后进行严格的语义检查和类型校验。校验通过后，编译器会将高级语言翻译为平台无关的字节码指令（Bytecode），生成.class文件。在标准的工程构建流程中，这些.class文件会按照Java的包结构（相对路径）被输出至target/classes目录下，同时，resources目录下的配置文件等非代码资源也会被一并拷贝至此，形成完整的运行时类路径（Classpath）基础。
-内存映射：Class对象与元数据的诞生
-.class文件本质上是一种紧凑的二进制数据结构，它精确记录了类的元数据（如全限定名、父类、接口）、字段信息、方法签名、常量池以及核心的字节码指令。当JVM启动并需要执行某个类时，类加载器（ClassLoader）会读取这些二进制流，并在JVM的方法区（Method Area/Metaspace）中为其创建唯一对应的java.lang.Class对象。
-这个Class对象是JVM对类的“运行时映射”。它不仅包含了类的所有结构信息，还充当了反射机制的唯一入口。此时，类在内存中已经具备了完整的拓扑结构，但尚未真正开始执行业务逻辑。
-链接与初始化：从静态结构到可执行状态
-在Class对象创建后，JVM会依次执行链接（Linking）与初始化（Initialization）过程。
-验证与准备：JVM首先验证字节码的合法性，并为类的静态变量分配内存并赋予默认零值。
-解析：将常量池中的符号引用替换为内存中的直接引用，确保类与类之间的调用链路畅通。
-初始化：按照严格的顺序执行静态代码块和静态变量赋值，完成类的最终预热。
-至此，一个类才真正处于“就绪”状态，可以被线程安全地调用。
-运行时：执行引擎与反射的动态调度
-当程序真正运行时，JVM的执行引擎（Execution Engine）开始接管控制权。对于常规的方法调用，执行引擎会逐条读取字节码，通过解释器（Interpreter）翻译为机器指令，或者通过JIT编译器将热点代码编译为本地机器码交由CPU直接执行。
-而对于反射调用，JVM则提供了一种更为动态的调度机制。当开发者通过Class对象获取Method并调用invoke()时，JVM会在运行时动态解析目标方法的字节码。为了平衡启动速度与执行效率，JVM内部采用了Inflation（膨胀）机制：在反射调用的初期，通过JNI调用本地方法实现；当调用次数超过阈值后，JVM会动态生成包含目标方法调用逻辑的字节码代理类，从而让反射调用也能享受到JIT编译带来的极致性能。
-"
+ai_response:
+"""
+
+### 泛型
+
+> 在复杂的企业级应用开发中，类型安全与代码复用是架构设计的核心诉求。泛型（Generics）的引入正是为了解决这一痛点，它允许开发者在定义类、接口或方法时，将类型本身作为一种参数进行传递。这种机制不仅消除了大量强制类型转换的冗余代码，更重要的是将类型检查从运行时提前到了编译期，从而在代码执行前就能拦截潜在的类型安全隐患。
+
+#### 泛型定义
+
+泛型的核心思想是“类型参数化”，它本质上是一个编译期的类型模板。在声明泛型类或方法时，我们使用占位符（如 T、K、V）来代表未知的数据类型。当存在多个类型参数时，可以通过 <K, V> 或 <K, V, T> 的形式进行声明，以支持更复杂的数据结构映射。
+
+在实际工程实践中，泛型的使用场景需要严格区分：如果一个类中存在泛型字段，那么该类必须被声明为泛型类，因为只有类级别的泛型声明才能让字段共享该类型参数；反之，如果仅仅是某个方法内部需要处理动态类型，且该类型不依赖于类的实例状态，则完全可以直接定义泛型方法，而无需将整个类泛型化。这种细粒度的控制是保持API简洁性的关键。
+
+泛型类：
+
+```java
+public class Student<T, K, V, E> {
+    private T node;
+    private Map<K, V>;
+    private List<E> config;
+
+    public Student(K id, V name) {
+        super();
+        this.id = id;
+        this.name = name;
+    }
+
+    public static void main(String[] args) {
+        Student<Integer, String> student = new Student<Integer, String>(1001, "tom");
+        System.out.println(student.id);
+        System.out.println(student.name);
+        Student<String, String> student2 = new Student<String, String>("s1001", "tom");
+        System.out.println(student2.id);
+        System.out.println(student2.name);
+    }
+\`\`\`
+
+泛型接口：
+
+1. 定义泛型接口
+
+```java
+import java.util.List;
+
+public interface IBaseDao<K, T> {
+
+    public List<T> getAll();
+
+    public T queryById(K k);
+
+    public int add(T t);
+
+    public int update(T t);
+
+    public int delete(K k);
+}
+\`\`\`
+
+2. 定义具体接口
+
+```java
+public interface EmployeeDao extends IBaseDao<Integer,Employee> {
+
+}
+
+public interface DeptDao extends IBaseDao<Integer, Dept> {
+    long getCount() throws SQLException;
+}
+\`\`\`
+
+3. 定义实现类
+\`\`\`java
+public class EmployDaoImpl implements EmployeeDao{
+
+    @Override
+    public List<Employee> getAll() {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public Employee queryById(Integer k) {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public int add(Employee t) {
+        // TODO Auto-generated method stub
+        return 0;
+    }
+
+    @Override
+    public int update(Employee t) {
+        // TODO Auto-generated method stub
+        return 0;
+    }
+
+    @Override
+    public int delete(Integer k) {
+        // TODO Auto-generated method stub
+        return 0;
+    }
+
+}
+\`\`\`
+#### 泛型原理
+
+Java语言泛型的实现是通过“类型擦除（Type Erasure）”机制在编译期实现的。当我们在代码中定义 `class ClassName<T> { ... }` 时，`<T>` 仅仅是一个类型占位符。在 javac 编译阶段，编译器会进行严格的类型检查，随后将泛型模板中的 `T` 统一擦除并替换为其边界类型（若无边界则默认为 `Object`）。因此，在 JVM 运行时，所有的泛型实例本质上都是原始类型（Raw Type）。
+
+这种擦除机制带来了一个直接的工程限制：泛型参数绝对不能是基本数据类型（如 `int`、`double`），因为 `Object` 无法指向基本类型，必须使用对应的包装类。同时，由于泛型信息在运行时已被抹去，开发者无法通过 `getClass()` 获取带有泛型信息的 `Class` 对象。无论 `T` 的实际类型是什么，`getClass()` 返回的永远是唯一的 `className.class`。
+
+此外，类型擦除导致在泛型类内部无法直接通过 new T() 来实例化类型参数，因为编译器会将其擦除为 `new Object()`。若需在泛型内部进行实例化，必须通过传入 `Class<T> clazz` 参数，借助反射机制来完成对象的创建。
+
+#### 泛型继承与静态上下文的边界
+
+在泛型继承场景中，子类在继承泛型父类时，必须明确指定父类的泛型类型，或者子类自身也声明为泛型类并将类型参数向上传递，以保证父类中依赖泛型类型的字段和方法在子类中依然具备明确的类型契约。
+对于静态方法而言，它不属于类的任何实例，因此无法访问类上声明的泛型参数。如果静态方法需要处理泛型逻辑，必须在方法签名上独立声明泛型方法，例如 `public static <K> K getProxy(Class<K> serviceClass)`。这种写法将泛型的生命周期限定在了方法调用期间，返回值类型由传入的 Class 对象动态决定，从而完美绕开了静态上下文的限制。
+
+#### 泛型多态与通配符的读写安全
+
+在普通的面向对象多态中，我们可以将子类对象向上转型为父类引用。但在泛型中，`List<Integer>` 并不是 `List<Number>` 的子类，泛型默认是不支持协变的。如果允许这种转换，向 `List<Number>` 中写入 `Float` 对象后，再从 `List<Integer>` 中读取，就会引发严重的 `ClassCastException`。为了在保持类型安全的前提下实现泛型的灵活性，Java 引入了通配符机制，其核心遵循 PECS（Producer Extends, Consumer Super）原则。
+
+只读与上界通配符 （`<? extends T>`）：当我们需要从一个集合中读取数据，且只关心它是某个基类的子类时，使用上界通配符。例如 `Pair<? extends Number>` 表示该容器可以持有 `Number` 或其任意子类。由于编译器无法确定具体的子类类型，因此禁止向其中写入任何非 null 值，从而保证了读取时的绝对安全。
+
+只写与下界通配符（`<? super T>`）：当我们需要向集合中写入数据，且只关心它能容纳某个基类及其祖先时，使用下界通配符。例如 `Pair<? super Integer>` 表示该容器可以持有 `Integer`、`Number` 或 `Object`。此时可以安全地写入 `Integer` 及其子类对象，但由于读取时只能将其视为 Object，因此通常仅用于消费数据的场景。
+
+无界通配符（`<?>`）：当方法仅需要操作与具体类型无关的逻辑（如获取集合大小、清空容器）时，可以使用无界通配符。它等价于 `<? extends Object>`，既不能安全地写入，也不能以特定类型读取，仅作为最宽泛的类型占位符存在。
+"""
 改写内容：
+```
+
+给出具体例子
+```Plain Text
+给出实际例子
 ```
 
 ## Git
