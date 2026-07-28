@@ -1081,27 +1081,13 @@ return null;
 
 SPI（Service Provider Interface）是一种将接口定义与实现类完全解耦的服务发现机制。它的核心思想是：框架仅定义标准接口，具体的实现由第三方提供，并在运行时由框架动态加载。
 
-
 `ServiceLoader` 是 Java 自带的一个 服务发现机制工具，用于加载某个接口（或抽象类）的多个实现类
-
-系统 SPI 机制会加载`resources`资源目录`META-INF/services/`\(标准元信息目录\)目录下的配置文件，文件名就是接口的全限定名，文件内容是接口实现类的全限定名，每行一个
 
 ##### 标准 SPI 的工作流
 
-
-ServiceLoader\<Serializer\> loader = ServiceLoader\.load\(Serializer\.class\);
-
-for \(Serializer s : loader\) \{
-
-// 手动挑一个
-
-\}
-
-自定义 SPI （不使用ServiceLoader，自定义SpiLoader）
-
-String type = config\.get\("serializer\.type"\); // 比如 "json"
-
-Serializer s = mySpiFactory\.get\(type\); // 自动加载 JsonSerializer
+1. 接口定义：框架定义服务接口（如 `java.sql.Driver`）。
+2. 实现与配置：第三方在实现该接口后，必须在 JAR 包的 `META-INF/services/` 目录下创建一个以接口全限定名命名的文件，文件内容为实现类的全限定名（每行一个）。
+3. 动态加载：框架通过 `java.util.ServiceLoader.load(Interface.class)` 遍历类路径下所有 JAR 包中的配置文件，利用反射实例化所有声明的实现类，并缓存在内存中供业务按需调用。
 
 ### 泛型
 
