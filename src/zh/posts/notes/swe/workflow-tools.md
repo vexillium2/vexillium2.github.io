@@ -683,7 +683,7 @@ fix: 修复项目参与者批量导入功能
 
 - `alt` + `⬅` 切换标签页
 
-##### Mac
+#### Mac
 
 1. Edit 编辑
 - command + / 注释
@@ -787,7 +787,7 @@ command + < / > 跳转到行首 / 行尾 command + [] 跳转至代码块首 / �
 
 ### VS code
 
-
+#### Windows
 
 - 查找所有引用
 
@@ -801,3 +801,7 @@ command + < / > 跳转到行首 / 行尾 command + [] 跳转至代码块首 / �
 
 - 快速修复（import） `Ctrl` + `.`
 
+#### Mac
+
+1. 编辑代码
+- option + z 切换自动换行

@@ -50,8 +50,6 @@ typescript
 
 编辑
 
-
-
 // Java: if (user != null && user.getAddress() != null) ...
 // TS:
 const city = user?.address?.city ?? 'Unknown';
