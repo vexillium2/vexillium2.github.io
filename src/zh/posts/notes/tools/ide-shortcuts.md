@@ -237,12 +237,12 @@ command + < / > 跳转到行首 / 行尾 command + [] 跳转至代码块首 / �
 - Command + PgDown 按屏向下滚动
 - Command + Shift + [ 折叠代码块
 - Command + Shift + ] 展开代码块
-- Command + K Command + [ 折叠全部子代码块
-- Command + K Command + ] 展开全部子代码块
-- Command + K Command + 0 折叠全部代码块
-- Command + K Command + J 展开全部代码块
-- Command + K Command + C 添加行注释
-- Command + K Command + U 移除行注释
+- Command + Option + [ 折叠全部子代码块
+- Command + Option + ] 展开全部子代码块
+- Command + Option + 0 折叠全部代码块
+- Command + Option + J 展开全部代码块
+- Command + Option + C 添加行注释
+- Command + Option + U 移除行注释
 - Command + / 添加、移除行注释
 - Option + Shift + A 添加、移除块注释
 - Option + Z 自动换行、取消自动换行
@@ -273,14 +273,14 @@ command + < / > 跳转到行首 / 行尾 command + [] 跳转至代码块首 / �
 - Command + Shift + G 查找上一个
 - Option + Enter 选中所有匹配项
 - Command + D 向下选中相同内容
-- Command + K Command + D 移除前一个向下选中相同内容
+- Command + Option + D 移除前一个向下选中相同内容
 
 10. 进阶
 - Ctrl + Space 打开建议
 - Command + Shift + Space 参数提示
 - Tab Emmet插件缩写补全
 - Option + Shift + F 格式化
-- Command + K Command + F 格式化选中内容
+- Command + Option + F 格式化选中内容
 - F12 跳转到声明位置
 - Option + F12 查看具体声明内容
 - Command + K F12 分屏查看具体声明内容
@@ -289,7 +289,7 @@ command + < / > 跳转到行首 / 行尾 command + [] 跳转至代码块首 / �
 - F2 重命名符号
 - Command + Shift + . 替换为上一个值
 - Command + Shift + , 替换为下一个值
-- Command + K Command + X 删除行尾多余空格
+- Command + Option + X 删除行尾多余空格
 - Command + K M 更改文件语言
 
 11. 导航
@@ -312,10 +312,10 @@ command + < / > 跳转到行首 / 行尾 command + [] 跳转至代码块首 / �
 - Command + 1 切换到第一分组
 - Command + 2 切换到第二分组
 - Command + 3 切换到第三分组
-- Command + K Command + Left 切换到上一分组
-- Command + K Command + Right 切换到下一分组
-- Command + K Command + Shift + Left 左移编辑器
-- Command + K Command + Shift + Right 右移编辑器
+- Command + Option + Left 切换到上一分组
+- Command + Option + Right 切换到下一分组
+- Command + Option + Shift + Left 左移编辑器
+- Command + Option + Shift + Right 右移编辑器
 - Command + K Left 激活左侧编辑组
 - Command + K Right 激活右侧编辑组
 
@@ -326,7 +326,7 @@ command + < / > 跳转到行首 / 行尾 command + [] 跳转至代码块首 / �
 - Command + Shift + S 另存为
 - Command + Option + S 全部保存
 - Command + W 关闭
-- Command + K Command + W 全部关闭
+- Command + Option + W 全部关闭
 - Command + Shift + T 重新打开被关闭的编辑器
 - Command + K Enter 保持打开
 - Ctrl + Tab 打开下一个
@@ -359,7 +359,7 @@ Command + K O 新窗口打开当前文件
 - Command + F11 进入
 - Shift + F11 跳出
 - Command + F10 跳过
-- Command + K Command + I 显示悬停信息
+- Command + Option + I 显示悬停信息
 
 16. 集成终端
 - Ctrl + 显示终端 Ctrl + Shift + 新建终端

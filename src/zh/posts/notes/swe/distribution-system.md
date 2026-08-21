@@ -1,3 +1,13 @@
+---
+lang: zh-CH
+title: 分布式系统学习笔记
+description: 分布式系统学习笔记
+date: 2025-06-11
+category:
+  - 后端开发
+tag:
+  - 后端
+---
 # 分布式系统
 
 ### CAP理论
