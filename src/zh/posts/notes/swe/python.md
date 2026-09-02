@@ -35,6 +35,23 @@ pip freeze
 
 2. 函数形参一个\*代表参数元组，两个\*代表有关键字的参数字典
 
+#### uv
+
+[uv](https://docs.astral.sh/uv/) 是 Astral 用 Rust 写的 Python 包/项目管理工具，定位是把 venv、pip、pip-tools 等分散的环节合并为 Cargo 式的统一工作流：依赖声明在 `pyproject.toml`，`uv.lock` 锁定可复现的精确版本。速度优势来自并行下载与全局内容寻址缓存（不同项目共享同一份已下载的 wheel）。
+
+```Bash
+uv add requests        # 添加依赖并写入 uv.lock
+uv sync                # 按 uv.lock 创建/更新 .venv 并安装
+uv run python main.py  # 在项目 .venv 中执行命令
+```
+
+pip 用户也可以逐条替换旧命令：`uv venv` 建环境，`uv pip install xxx` 语法与 `pip install xxx` 一致，但需要先激活 `.venv`，或用 `--python`/`--system` 显式指定目标。
+
+需要注意的边界：
+
+- `uv add`/`uv sync`（项目模式，同步 pyproject.toml）与 `uv pip install`（直接写入当前环境）是两套工作流，不要混用，否则依赖会漂移到 lock 管理之外。
+- `uv python install` 会把解释器装进 uv 自己的托管目录，并不等于使用系统 Python；依赖系统解释器的场景应先用 `uv python find` 确认。
+
 ### 基础知识
 
 #### 输入输出
@@ -118,6 +135,27 @@ async和await
 @property
 
 #### 抽象方法\&类方法
+
+#### 静态方法（@staticmethod）
+
+**@staticmethod 把一个普通函数放进类的命名空间，调用时不隐式传入实例（self）或类（cls），函数本身不感知调用者是类还是实例。** 因此 `Validator.check(...)` 和 `Validator().check(...)` 行为一致，实例在这里只承担"查找方法"的作用。
+
+```Python
+class Validator:
+    @staticmethod
+    def check(s: str) -> bool:
+        return "@" in s
+
+Validator.check("a@b")     # True
+Validator().check("a@b")   # True：实例只用于查找
+```
+
+对比理解更有效：实例方法隐式绑定 self，classmethod 隐式绑定 cls（可读类级状态、子类覆写时保持多态），**staticmethod 是唯一不绑定任何东西的，原样返回函数本身**。因此"方法需要访问类级数据或支持子类多态"应该用 classmethod；"把与类主题强相关的纯函数收进类里、便于从 `ClassName.method()` 调用"才用 staticmethod。
+
+常见误区：
+
+- staticmethod 内部拿不到类状态，引用类级常量只能写类名，一旦被子类继承、常量被覆写，写死的父类名不会跟着变——这类需求应改用 classmethod。
+- 不需要 Java 式的"static 工具类"：与类概念无关的纯函数放模块顶层即可，staticmethod 的价值只是语义上的归属与调用入口。
 
 ### 内存管理方式
 
