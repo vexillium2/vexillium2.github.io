@@ -23,7 +23,7 @@ python -m venv .venv
 
 #### 包管理pip
 
-```Plain Text
+```Python
 pip install
 
 pip freeze
