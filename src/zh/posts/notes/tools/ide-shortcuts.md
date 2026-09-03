@@ -370,4 +370,4 @@ Command + K O 新窗口打开当前文件
 - Command + Home 滚动到顶部
 - Command + End 滚动到底部
 
-![alt text](src/.vuepress/public/assets/images/swe/workflow-tools/vscodemac.png)
+![vscode mac 快捷键总览](/assets/images/swe/workflow-tools/vscodemac.png)
