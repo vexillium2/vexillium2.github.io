@@ -106,27 +106,86 @@ group函数
 
 确认类
 
-#### 并发和并行
+### 并发与异步编程
 
-#### 多线程异步
+Python 处理并发/并行的三套工具：**线程（threading）**、**进程（multiprocessing）**、**协程（asyncio）**，选择取决于任务类型。CPython 的 **GIL（全局解释器锁）**使同一进程内的 Python 线程无法并行执行字节码，所以线程对 CPU 密集型任务几乎无加速，此类任务一般用多进程；I/O 密集型任务（网络请求、读写等待）主要时间花在等待上，适合用线程或协程把等待时间重叠起来。
 
-async和await
+#### 协程与 async/await
 
-#### 协程（Coroutine）
+线程切换是在内核态进行的，需要中断用户态切换到内核态，期间需要保留线程栈、计数器等，开销远没有在一个线程内切换子程序高；同一线程内也不需要考虑读写冲突，因此没有加锁开销。**协程（Coroutine）是"可以被挂起再恢复"的函数**：挂起时保存当前执行状态并让出 CPU，条件满足后再继续。
 
-由于线程切换是在内核态进行，需要中断用户态切换到内核态，期间需要保留线程块、计数器等开销，效率远没有在一个线程中切换子程序高。还有一点就是同一个线程不需要考虑读写冲突，因此没有加锁的开销。
+```Python
+async def fetch(url):
+    data = await http_get(url)   # 挂起点：等待结果时让出控制权
+    return data
+```
 
-#### 回调函数（Callback）
+- `async def` 定义**协程函数**；调用它只生成 coroutine 对象，**函数体不会立即执行**，必须交给事件循环运行（`await`、`asyncio.run()`、`asyncio.create_task()` 三选一）。
+- **`await` 只能写在 `async def` 内**，等待一个 *awaitable*。常见 awaitable 有三类：协程本身、Task、Future。
+- `await` 的语义：当前协程挂起直到结果就绪；调用链上任意一层挂起，整条链的控制权都交还给事件循环，其它协程才有机会运行。
 
-**回调**是一种编程模式，其核心思想是：**“现在把一个函数给你，但不要立即执行它，等到特定的事件发生或特定的任务完成时，由你（调用方）来调用（Call Back）它。”**
+#### 回调与事件驱动
 
-简单来说，回调是**延迟执行的函数**。
+**回调**是一种编程模式，其核心思想是：**"现在把一个函数给你，但不要立即执行它，等到特定的事件发生或特定的任务完成时，由你（调用方）来调用（Call Back）它。"**
 
+简单来说，回调是**延迟执行的函数**。它天然适配异步与事件驱动场景：I/O 完成时由运行时调用回调。缺点是多层嵌套依赖会形成难读的**回调地狱（callback hell）**；async/await 用同步书写顺序表达异步控制流，本质是回调的语法替代。
 
+#### 事件循环与 asyncio.run
 
-异步编程、事件驱动编程和函数式编程
+**asyncio 的核心是事件循环（event loop）：在单线程内不断调度就绪的协程与回调，协程在 await 处挂起时切换执行其它任务。** 新代码统一入口：
 
+```Python
+import asyncio
 
+async def main():
+    print("hello")
+
+asyncio.run(main())   # 创建事件循环 → 运行 main → 结束后关闭循环
+```
+
+- `asyncio.run()`（3.7+）负责创建、运行、关闭事件循环，程序顶层只调用一次；不要在已有运行中循环的上下文里再调用它。
+- 旧式 `loop = asyncio.get_event_loop()` + `loop.run_until_complete()` 只用于维护老代码。
+
+#### Task 与并发执行
+
+Task 是"**已经交给事件循环调度的协程**"。`asyncio.create_task(coro)` 注册协程并立即返回 Task，此后它与当前代码并发执行（真正切换发生在某个 await 挂起点）。
+
+```Python
+async def main():
+    t1 = asyncio.create_task(fetch("a"))
+    t2 = asyncio.create_task(fetch("b"))
+    results = await asyncio.gather(t1, t2)   # 并发等待全部完成
+```
+
+- `asyncio.gather(*aws, return_exceptions=False)`：等待全部完成并返回结果列表；默认第一个异常立即上抛（其余任务仍会跑完但结果被丢弃），设 `return_exceptions=True` 可把异常当作结果收集。
+- `asyncio.wait(aws, timeout=..., return_when=...)`：返回 `(done, pending)` 两个集合，适合带超时或"最先完成"（`FIRST_COMPLETED`）策略。
+- `asyncio.as_completed(aws)`：按完成先后逐个产出结果，适合先完成先处理。
+- Task 常用操作：`task.cancel()` 取消、`task.done()` / `task.result()` 查询；`await asyncio.sleep(0)` 是显式让出控制权的挂起点，排查"某个任务饿死"先看它前面有没有挂起点。
+- 3.11+ 还有 **`asyncio.TaskGroup`**：`async with` 管理一组任务，任一成员抛异常会取消组内其余任务。
+
+#### 超时与取消
+
+- `asyncio.wait_for(coro, timeout)` 超时抛 `TimeoutError`；更优雅的是上下文管理器 `async with asyncio.timeout(delay):`（3.11+）。
+- `task.cancel()` 会向目标协程注入 **`asyncio.CancelledError`**。它继承自 `BaseException`，`except Exception` 抓不到；协程应在 `finally` 中释放资源。`asyncio.shield(aw)` 可屏蔽取消：外层取消不波及内部任务。
+
+#### 同步代码与线程桥接
+
+- 协程里直接调用阻塞式同步函数会卡死整个事件循环，应改用 `await asyncio.to_thread(func, *args)`（3.9+）丢到默认线程池；底层等价物是 `loop.run_in_executor(None, func, ...)`。
+- 反过来，在其它线程里向运行中的循环投递协程用 `asyncio.run_coroutine_threadsafe(coro, loop)`，返回 `concurrent.futures.Future`。
+- 选型结论：**CPU 密集型要真并行用进程（`ProcessPoolExecutor`），asyncio 只适合 I/O 密集型。**
+
+#### 协程间的原语与异步迭代
+
+- `asyncio.Lock / Event / Semaphore / Condition` 与 `threading` 同名原语概念一致，但获取必须 `await`：`async with lock:`。线程锁不能在协程里直接使用（会阻塞循环），asyncio 原语也不能当线程锁用。
+- `asyncio.Queue` 用于协程间解耦：`await q.put(x)` / `await q.get()`，配合 `task_done()` / `join()` 实现生产者-消费者。
+- 异步协议扩展：`async with`（异步上下文管理器 `__aenter__` / `__aexit__`）、`async for`（异步迭代 `__aiter__` / `__anext__`，或 `async def` + `yield` 的异步生成器）。
+
+#### 常见坑
+
+- **忘 `await`**：协程从未被调度，解释器警告 `coroutine ... was never awaited`。
+- **协程里用同步阻塞调用**（`time.sleep`、同步 `requests`）：整个事件循环被卡住，其它任务全部暂停；换成 `await asyncio.sleep()` 或 `asyncio.to_thread`。
+- **伪并发**：`[await fetch(i) for i in ...]` 是串行等待；要并发必须先 `create_task` 再一次性 `gather`。
+- **忽略 CancelledError**：它继承 `BaseException`，`except Exception` 不生效；超时/取消路径下的资源清理要写在 `finally`。
 
 ### 类
 
