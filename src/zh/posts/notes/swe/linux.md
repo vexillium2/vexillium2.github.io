@@ -935,14 +935,7 @@ AAA:BB:CC
 ```
 
 
-
-
-
-
-
 ### 系统login logout exit shutdown
-
-
 
 ```Bash
 login 登入系统
@@ -984,18 +977,11 @@ nice -n 19 command 最低
 
 ### 进程监控 ps pstree top htop otop iotop
 
-
-
 `ps`用于报告当前系统的进程状态。
-
-
 
 可以搭配kill指令随时中断、删除不必要的程序。
 
-
-
 ps命令是最基本同时也是非常强大的进程查看命令，使用该命令可以确定有哪些进程正在运行和运行的状态、进程是否结束、进程有没有僵死、哪些进程占用了过多的资源等等
-
 
 
 ```Bash
@@ -1017,15 +1003,9 @@ pstree $$ -p //从当前bash开始，显示进程
 
 ### 网络监测
 
-
-
 nmop
 
-
-
 netstat
-
-
 
 iptables
 
