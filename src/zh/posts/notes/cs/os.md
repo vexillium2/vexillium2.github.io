@@ -378,6 +378,12 @@ for (;;) {
 
 工程上**求稳选 LT，追求减少无效唤醒再上 ET**，且必须"非阻塞 + 读到 EAGAIN"配套。ET 漏读的典型症状是连接"假死"：有数据、无通知、请求悬空，极难排查。Nginx 默认 ET，Redis 用 LT。
 
+**回调的触发链路与就绪链表的并发。** 注册 fd 时，内核把回调函数挂到该 fd 底层对象（socket、timerfd 等）的**等待队列**上；对象就绪时（如数据包进入接收队列）协议栈唤醒这条等待队列，回调被调用并携带**就绪掩码**。回调先比对掩码与注册事件：匹配且该 fd 尚不在就绪链表中，就把它追加进链表，再唤醒阻塞在 `epoll_wait` 的线程——**先入队、后唤醒，也不攒批**：`epoll_wait` 发现链表非空即返回，一次最多拷出 `maxevents` 个事件，多余的留在链表里等下次。
+
+就绪链表存在"两个写者"：回调是生产者（网络路径常在软中断/进程上下文），`epoll_wait` 是消费者（要把链表项摘走并拷给用户）。内核用**自旋锁**串行化两端——回调可能在不可睡眠的中断上下文，因此不能用互斥锁。同时链表维持"**同一个 fd 至多入队一次**"的不变量，同一 fd 的连续多次就绪会被合并成一次入队，通知本身是幂等的。所以"回调一边入队、`epoll_wait` 一边摘除"的并发是安全的，不会丢事件、也不会重复上报。
+
+这同时澄清了 ET 的边界：**内核侧的并发保护是完备的，丢数据风险在应用侧。** ET 事件上报即摘除，下一次上报必须等新的"从无到有"边沿；若应用没读到 `EAGAIN` 就停止，残留数据不会产生新边沿——这正是不读干净就"假死"的机制根源。
+
 **多线程下的细节。** 多线程同时 `epoll_wait` 同一个实例，一个事件会唤醒所有等待线程、但只有一个能处理成功，其余空转，即**惊群**；Linux 4.5+ 可对注册项加 `EPOLLEXCLUSIVE`，让内核只唤醒其中一个。若连接建立后要交给线程池处理，可用 `EPOLLONESHOT`：事件只上报一次并自动摘除，处理完再 `EPOLL_CTL_MOD` 挂回，避免同一 fd 被多线程并发处理。
 
 **适用边界。** epoll 的收益有前提：连接数大而活跃比例低。fd 少且几乎总在活跃时，红黑树与回调管理是纯开销，poll 甚至每连接一线程反而更简单。epoll 是 Linux 专属接口，macOS/BSD 用 `kqueue`、Windows 用 `IOCP`；它监视的也不止 socket——`eventfd` / `signalfd` / `timerfd` 都能挂进同一张表，这正是 Linux 事件驱动架构的地基。
@@ -396,15 +402,115 @@ for (;;) {
 
 epoll 把重心从"每次全量检查"挪到了"事件驱动登记"，但语义仍是**就绪通知（Reactor）**——通知后应用还要自己发起 `read/write`。把"等待 + 读写"整体交给内核、完成后再通知（Proactor），是 `io_uring` 的命题；而"单线程 `epoll_wait` + 分派"正是事件循环的骨架，Redis、Nginx worker 都是这个形态。
 
-- 18.4 `kqueue`（macOS/BSD）
-- 18.5 `IOCP`（Windows）—— 唯一的原生异步模型
-- 18.6 **`io_uring`（Linux 5.1+）**
-  - 提交队列（SQ）+ 完成队列（CQ）
-  - 共享内存环形缓冲区（零拷贝、零系统调用）
-  - `SQPOLL` 模式（内核轮询线程）
-  - 与 epoll 的本质区别：Reactor → Proactor
-  - `liburing` 编程模型
-- 18.7 多路复用对比总表
+#### 18.4 `kqueue`：一个队列容纳一切事件（macOS / BSD）
+
+BSD 生态（macOS 沿用）中与 epoll 对等的就绪型原语是 `kqueue`。它把"注册表驻留内核 + 事件驱动"的思路推得更远：**不只监视 IO 就绪，文件变更、信号、定时器等一切可等待对象都能进同一个队列**，由不同类型的事件过滤器（filter）处理：
+
+- `EVFILT_READ` / `EVFILT_WRITE`：fd 可读/可写，与 epoll 对应；
+- `EVFILT_VNODE`：文件被删除、改名、写入、属性变化——这是 epoll 做不到的文件系统监视；
+- `EVFILT_PROC` / `EVFILT_SIGNAL` / `EVFILT_TIMER` / `EVFILT_USER`：进程退出、信号、定时器、进程内事件，统一复用同一套等待机制。
+
+注册与等待都走 `kevent()`，事件以 (ident, filter) 唯一标识：
+
+```c
+struct kevent chg;
+EV_SET(&chg, fd, EVFILT_READ, EV_ADD, 0, 0, NULL);
+kevent(kq, &chg, 1, NULL, 0, NULL);            // 提交注册变更
+
+struct kevent evlist[64];
+int n = kevent(kq, NULL, 0, evlist, 64, NULL); // 等待就绪事件
+for (int i = 0; i < n; i++)
+    handle(&evlist[i]);                        // ident=fd；filter 区分事件类型
+```
+
+几个与 epoll 的差别：
+
+- **事件带细节数据**：`EVFILT_READ` 的 `data` 直接给出当前可读字节数，`EVFILT_VNODE` 的 `fflags` 指明是哪类文件变更。epoll 只返回"可读/可写"布尔信号，有多少数据还得自己 `read` 才知道；
+- **触发语义默认是水平**：条件成立就持续上报，配合"读到 EAGAIN"才能消停；`EV_CLEAR` 可让事件上报后重置状态（近似边沿用法），`EV_ONESHOT` 只上报一次并自动注销；
+- 内核同样是事件驱动、O(活跃数)，因此和 epoll 一样能撑起海量空闲连接——libuv 在 macOS 上就是拿它当事件循环后端。
+
+**适用边界**与 epoll 类似：是 BSD/macOS 平台的答案，不能跨到 Linux。跨平台应用不要让业务代码直接依赖某一种，交给 libuv、Netty 这类运行时去选后端。
+
+#### 18.5 `IOCP`：Windows 的完成通知模型
+
+IOCP（I/O Completion Port）与前面所有"就绪通知"是**不同的模型**：它不等"可读了再自己读"，而是**先把读/写交给内核，内核完成后把结果投递回来**——即完成通知（Proactor）。Windows 上它是标准做法（Linux 直到 io_uring 出现才有同类的原生能力）。
+
+流程分三步：
+
+1. `CreateIoCompletionPort` 把连接绑定到完成端口；
+2. 发起异步操作：调用带 `OVERLAPPED` 的读写（文件用 `ReadFile`，网络用 `WSARecv`），操作未立即完成时返回 `ERROR_IO_PENDING`；
+3. 内核真正执行 IO，完成后向端口队列投递完成包；工作线程用 `GetQueuedCompletionStatus` 取出并直接处理。
+
+```c
+HANDLE port = CreateIoCompletionPort(conn, g_port, (ULONG_PTR)&ctx, 0);
+// 发起异步读：立即返回；数据就绪与否不用关心，内核会读完再通知
+ReadFile(conn, ctx->buf, ctx->len, NULL, &ctx->ov);  // 挂起则返回 ERROR_IO_PENDING
+
+// 工作线程：阻塞到"某个操作真正完成"
+GetQueuedCompletionStatus(port, &ctx->bytes, &ctx->key,
+                          (OVERLAPPED **)&ctx, INFINITE);
+handle(ctx);   // ctx->bytes 是实际读到的字节数，无需再补一次 read
+```
+
+关键特性与代价：
+
+- **等待与收数合为一步**：工作线程只等一次，拿到的就是"数据已就位 + 实际字节数"，不像就绪模型那样被唤醒后再补一次 `read`；
+- **线程数与完成数挂钩**：完成端口可设并发上限，内核保证同时运行的 worker 不超过该值，其余挂起等下一个完成——线程池规模跟着"正在完成的 IO"走，而不是跟着连接数走；
+- **内存义务前移**：每笔 IO 的缓冲区与 `OVERLAPPED` 上下文要预先分配、并活到完成回调，何时安全释放由应用管理；
+- 每连接可以有多个并发未完成的读写（对应一个连接多个 in-flight）。
+
+#### 18.6 `io_uring`：共享内存环形队列（Linux 5.1+）
+
+epoll 之后 Linux 仍有两块成本：一次就绪周期要多次系统调用（`epoll_wait` 一次 + 每个事件一次 `read/write`），且每次调用的参数都要跨越用户/内核边界。`io_uring` 的思路是把"等就绪 + 自己读"整体替换成**批量提交操作、回收完成结果**：
+
+- **SQ（提交队列）**：应用把一组请求填成 SQE（Submission Queue Entry）推进生产者指针；
+- **CQ（完成队列）**：内核执行完写入 CQE（Completion Queue Entry，含 `user_data` 和结果 `res`），推进自己的指针，应用读 CQ 回收。
+
+两条队列放在用户与内核**共享的一块 mmap 内存**里，指针推进只靠内存屏障同步，所以"提交一个读"和"回收一个完成"可以不触发系统调用；需要内核动手时才调一次 `io_uring_enter`。直接操作 ring 要自己处理内存序，工程上通常用 `liburing`：
+
+```c
+struct io_uring ring;
+io_uring_queue_init(64, &ring, 0);              // 建立共享内存环形队列
+
+struct io_uring_sqe *sqe = io_uring_get_sqe(&ring);
+io_uring_prep_recv(sqe, conn_fd, buf, sizeof(buf), 0); // 提交"把数据读进 buf"
+io_uring_sqe_set_data(sqe, &ctx);
+io_uring_submit(&ring);                          // 这批请求交给内核
+
+struct io_uring_cqe *cqe;
+io_uring_wait_cqe(&ring, &cqe);                  // 等的是"完成"，不是"可读"
+if (cqe->res > 0) handle(ctx, cqe->res);         // res = 实际读到的字节数
+io_uring_cqe_seen(&ring, cqe);                   // 归还 CQE，队列才能复用
+```
+
+与 epoll 的本质差别有三条：
+
+- **批量**：一次 `submit` 提交成百上千个操作、一次 `wait` 回收一批完成，系统调用开销被均摊到接近零；
+- **同一 fd 可挂多个未完成操作**：能给同一连接同时提交多个读写，靠 `user_data` 区分，完成可乱序返回；就绪模型里同 fd 的并发 IO 没有这种原生表达；
+- **Proactor**：提交的是"读完写进这块 buffer"，而不是"可读了叫我"。CQE 回来数据已就位，是完成通知而非就绪通知。
+
+**对"零拷贝"的两个澄清**（大纲里的表述容易误导）：
+
+1. ring 通道的零拷贝指**请求与结果元数据**不再经系统调用参数搬运；数据本身默认仍要拷贝——SQE 引用的是用户 buffer，内核照常拷贝；
+2. 数据面的免拷贝要靠 `io_uring_register` 注册固定缓冲（fixed buffer）+ `O_DIRECT` 等配合，和 `sendfile`/`splice` 的管道搬运是两码事。
+
+**SQPOLL 模式**：注册一个常驻内核的轮询线程主动消费 SQ，多数情况下应用连 `io_uring_enter` 都不用调；代价是这个内核线程在忙轮询/高频唤醒，占用 CPU——高 IOPS 场景划算，轻负载别开。
+
+**边界**：内核 5.1+ 才能用、常用特性要求更新版本；网络侧没有现成的"连接管理"，谁在等读、谁可写仍要应用自己维护状态机。它适合系统调用开销敏感的吞吐型服务；普通的"epoll + 线程池/协程"仍是更简单的主流。
+
+#### 18.7 六种机制对比总表
+
+| 维度 | select | poll | epoll | kqueue | IOCP | io_uring |
+| --- | --- | --- | --- | --- | --- | --- |
+| 平台 | POSIX | POSIX | Linux | macOS/BSD | Windows | Linux 5.1+ |
+| 通知模型 | 就绪 | 就绪 | 就绪 | 就绪 | 完成 | 完成（也支持就绪） |
+| 注册状态 | 无，每次重建 | 无，整体拷贝 | 内核驻留 | 内核驻留 | 内核驻留 | 内核驻留（共享内存） |
+| 同 fd 并发未完成操作 | 否 | 否 | 否 | 否 | 是 | 是 |
+| 事件范围 | 读/写/异常就绪 | 读/写就绪 | pollable fd | IO + 文件变更/信号/定时器 | 文件/网络等操作完成 | 文件/网络/fsync 等操作 |
+| 返回携带信息 | 就绪信号 | 就绪信号 | 就绪信号 | 就绪信号 + 细节（可读字节数等） | 完成结果（实际字节数） | 完成结果（字节数/错误码） |
+| 典型用途 | 少量 fd | 少量 fd | Linux 高并发就绪型 | macOS/BSD 事件循环 | Windows 高性能服务 | Linux 高 IOPS/低 syscall |
+
+六个接口不是平级替换关系，而是沿两条轴演进：一条是**就绪 → 完成**（真正的 IO 由谁发起），一条是**注册状态能否驻留内核、一次调用能管多少事件**。选型的现实约束首先是平台：Linux 上日常高并发仍是 epoll 的地盘，想把系统调用开销压到极致再上 io_uring；macOS/BSD 用 kqueue；Windows 用 IOCP。需要跨平台时，让 libuv、Netty 这类运行时替你选后端，比自己维护四套模型稳妥得多。
 
 ### 第 19 章 零拷贝
 - 19.1 传统 `read + write` 的 4 次拷贝 + 4 次上下文切换
