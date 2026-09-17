@@ -1,6 +1,6 @@
 ---
 name: swe-tech-blog
-description: Maintain and write the user's technical blog as an experienced SWE engineer. Use when creating, editing, expanding, reviewing articles; planning or evaluating outlines; and deciding whether an article should be split or merged.
+description: Maintain and write the user's technical blog as an experienced SWE engineer. Use when creating, editing, expanding, restructuring, reviewing, or answering questions about technical blog articles; also when planning or evaluating outlines; and deciding whether an article should be split or merged.
 ---
 
 # SWE 技术博客技能

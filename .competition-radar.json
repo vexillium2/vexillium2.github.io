@@ -1,0 +1,2312 @@
+{
+  "version": 2,
+  "updatedAt": 1789623106386,
+  "note": "竞赛情报台的增量状态。竞赛库本身在 .competition-radar.catalog.json；此文件只保存联网核验结果、线索、同步历史与你的筛选偏好。",
+  "prefs": {
+    "blockedThemes": [
+      "entrepreneurship",
+      "math-modeling",
+      "exam"
+    ],
+    "onlyHackathon": false,
+    "boostRewards": true
+  },
+  "enrich": [
+    {
+      "id": "yjs-series",
+      "status": "active",
+      "hitCount": 11,
+      "lastSeenAt": 1789623106386,
+      "checkedAt": 1789623106386,
+      "sources": [
+        "https://cxcy.sut.edu.cn/info/1098/9232.htm#1",
+        "https://yjs.hbue.edu.cn/b7/1c/c8137a374556/page.htm",
+        "https://ygb.sdu.edu.cn/info/1011/20564.htm#1",
+        "https://cxcy.ahu.edu.cn/2026/0601/c23531a393664/page.htm",
+        "https://gs.hubu.edu.cn/info/1039/11556.htm#1",
+        "https://yjsy.swfu.edu.cn/info/1361/13536.htm"
+      ]
+    },
+    {
+      "id": "yjs-mcm",
+      "status": "active",
+      "hitCount": 5,
+      "lastSeenAt": 1789623106386,
+      "checkedAt": 1789623106386,
+      "sources": [
+        "https://yjs.hbue.edu.cn/b7/1c/c8137a374556/page.htm",
+        "https://www.gs.sjtu.edu.cn/post/detail/Z3MzNzQw#1",
+        "https://gs.sjtu.edu.cn/post/detail/Z3MzNzQw#1",
+        "https://yjs.xhu.edu.cn/b8/54/c874a243796/page.htm"
+      ]
+    },
+    {
+      "id": "yjs-ai",
+      "status": "active",
+      "hitCount": 5,
+      "lastSeenAt": 1789620559797,
+      "checkedAt": 1789620559797,
+      "sources": [
+        "https://mp.weixin.qq.com/s/Ltt8cpes4tHS83vRzOKosg?",
+        "https://cxcyxy.sylu.edu.cn/info/1089/3314.htm",
+        "https://gs.xjtu.edu.cn/info/1146/11512.htm",
+        "https://www.aitop100.cn/infomation/details/34120.html#1#1",
+        "https://grd.bit.edu.cn/pygz/cxpy/tzgg_cxpy/6d2760236f024ff195d6c488718c5fdd.htm#1#1"
+      ]
+    },
+    {
+      "id": "yjs-edc",
+      "status": "unverified",
+      "hitCount": 0,
+      "lastSeenAt": 0,
+      "checkedAt": 0,
+      "sources": []
+    },
+    {
+      "id": "yjs-smartcity",
+      "status": "unverified",
+      "hitCount": 0,
+      "lastSeenAt": 0,
+      "checkedAt": 0,
+      "sources": []
+    },
+    {
+      "id": "yjs-uav",
+      "status": "unverified",
+      "hitCount": 0,
+      "lastSeenAt": 0,
+      "checkedAt": 0,
+      "sources": []
+    },
+    {
+      "id": "ncss",
+      "status": "active",
+      "hitCount": 5,
+      "lastSeenAt": 1789620559797,
+      "checkedAt": 1789620559797,
+      "sources": [
+        "https://cxcy.ysu.edu.cn/info/1043/4112.htm#1#1#1",
+        "http://m.jyt.henan.gov.cn/2026/08-03/3382016.html#1#1",
+        "http://www.moe.gov.cn/srcsite/A08/s5672/202607/t20260731_1445670.html#1",
+        "https://jyj.guiyang.gov.cn/newsite/xwzx/jyyw/202608/t20260803_90687205.html#1#1",
+        "https://hudong.moe.gov.cn/srcsite/A08/s5672/202607/t20260731_1445670.html#1"
+      ]
+    },
+    {
+      "id": "tzb",
+      "status": "active",
+      "hitCount": 5,
+      "lastSeenAt": 1789620559797,
+      "checkedAt": 1789620559797,
+      "sources": [
+        "https://cuc.fjnu.edu.cn/gqt/2026/0623/c913a44058/page.htm#1#1#1",
+        "https://hstc.edu.cn/info/1266/38572.htm",
+        "https://smkx.sicau.edu.cn/info/1061/28591.htm",
+        "https://cgst.sicau.edu.cn/info/1059/14268.htm",
+        "http://tuanwei.hbu.edu.cn/contents/541/15306.html"
+      ]
+    },
+    {
+      "id": "ciscn",
+      "status": "active",
+      "hitCount": 2,
+      "lastSeenAt": 1789620559797,
+      "checkedAt": 1789620559797,
+      "sources": [
+        "https://cst.hitwh.edu.cn/2026/0602/c371a214347/page.htm",
+        "http://cybersec.xjtu.edu.cn/info/1017/2188.htm"
+      ]
+    },
+    {
+      "id": "cccc",
+      "status": "unverified",
+      "hitCount": 0,
+      "lastSeenAt": 0,
+      "checkedAt": 0,
+      "sources": []
+    },
+    {
+      "id": "ccpc",
+      "status": "active",
+      "hitCount": 3,
+      "lastSeenAt": 1789620559797,
+      "checkedAt": 1789620559797,
+      "sources": [
+        "http://www.cauc.edu.cn/jsjzh_sys/info/1109/1229.htm",
+        "http://csw.jlu.edu.cn/info/1036/7431.htm",
+        "https://ccpc.io/post/267"
+      ]
+    },
+    {
+      "id": "lanqiao",
+      "status": "active",
+      "hitCount": 5,
+      "lastSeenAt": 1789620559797,
+      "checkedAt": 1789620559797,
+      "sources": [
+        "https://dasai.lanqiao.cn/pages/v7/dasai/competition/individual_competition.html&wd=&eqid=f03edc24000bc58b0000000264b7fb2e",
+        "http://jsjkxygcxy.sanxiau.edu.cn/system/_content/download.jsp?urltype=news.DownloadAttachUrl&owner=2132652140&wbfileid=14781236#1#1",
+        "https://cxcy.wust.edu.cn/info/1482/11862.htm",
+        "https://www.scuec.edu.cn/jky/info/1143/5663.htm",
+        "https://maths.hfut.edu.cn/info/1047/7268.htm"
+      ]
+    },
+    {
+      "id": "qwb",
+      "status": "unverified",
+      "hitCount": 0,
+      "lastSeenAt": 0,
+      "checkedAt": 0,
+      "sources": []
+    },
+    {
+      "id": "ccf-bdci",
+      "status": "active",
+      "hitCount": 6,
+      "lastSeenAt": 1789623106386,
+      "checkedAt": 1789623106386,
+      "sources": [
+        "https://openjiuwen.com/en/news/news-artical?id=42",
+        "https://www.xhby.net/content/s6a5debe0e4b04c44976a64cc.html",
+        "https://www.xir.cn/races/bdci2025"
+      ]
+    },
+    {
+      "id": "cnsoftbei",
+      "status": "unverified",
+      "hitCount": 0,
+      "lastSeenAt": 0,
+      "checkedAt": 0,
+      "sources": []
+    },
+    {
+      "id": "icsprout",
+      "status": "unverified",
+      "hitCount": 0,
+      "lastSeenAt": 0,
+      "checkedAt": 0,
+      "sources": []
+    },
+    {
+      "id": "compsys",
+      "status": "unverified",
+      "hitCount": 0,
+      "lastSeenAt": 0,
+      "checkedAt": 0,
+      "sources": []
+    },
+    {
+      "id": "pac",
+      "status": "unverified",
+      "hitCount": 0,
+      "lastSeenAt": 0,
+      "checkedAt": 0,
+      "sources": []
+    },
+    {
+      "id": "jsjds",
+      "status": "unverified",
+      "hitCount": 0,
+      "lastSeenAt": 0,
+      "checkedAt": 0,
+      "sources": []
+    },
+    {
+      "id": "ic-contest",
+      "status": "unverified",
+      "hitCount": 0,
+      "lastSeenAt": 0,
+      "checkedAt": 0,
+      "sources": []
+    },
+    {
+      "id": "smartcar",
+      "status": "unverified",
+      "hitCount": 0,
+      "lastSeenAt": 0,
+      "checkedAt": 0,
+      "sources": []
+    },
+    {
+      "id": "cumcm",
+      "status": "unverified",
+      "hitCount": 0,
+      "lastSeenAt": 0,
+      "checkedAt": 0,
+      "sources": []
+    },
+    {
+      "id": "hw-software",
+      "status": "active",
+      "hitCount": 4,
+      "lastSeenAt": 1789620559797,
+      "checkedAt": 1789620559797,
+      "sources": [
+        "https://www.163.com/dy/article/KO5L3M220514CDBK.html?spss=adap_pc&referFrom=",
+        "https://baike.baidu.com/item/2026%E5%8D%8E%E4%B8%BA%E8%BD%AF%E4%BB%B6%E7%B2%BE%E8%8B%B1%E6%8C%91%E6%88%98%E8%B5%9B/67516941#1",
+        "https://finance.sina.com.cn/jjxw/2026-03-16/doc-inhrequn5939512.shtml?cref=cj#1",
+        "https://m.toutiao.com/article/7617787035197243947/?upstream_biz=toutiao_pc#1"
+      ]
+    },
+    {
+      "id": "hw-ict",
+      "status": "unverified",
+      "hitCount": 0,
+      "lastSeenAt": 0,
+      "checkedAt": 0,
+      "sources": []
+    },
+    {
+      "id": "ascend",
+      "status": "unverified",
+      "hitCount": 0,
+      "lastSeenAt": 0,
+      "checkedAt": 0,
+      "sources": []
+    },
+    {
+      "id": "tencent-ad",
+      "status": "active",
+      "hitCount": 3,
+      "lastSeenAt": 1789620559797,
+      "checkedAt": 1789620559797,
+      "sources": [
+        "https://baike.baidu.com/item/2026%E8%85%BE%E8%AE%AF%E5%B9%BF%E5%91%8A%E7%AE%97%E6%B3%95%E5%A4%A7%E8%B5%9B/67500599#1",
+        "http://www.c114.net.cn/ainews/68160.html",
+        "https://cloud.tencent.cn/developer/article/2532622#1"
+      ]
+    },
+    {
+      "id": "tianchi",
+      "status": "active",
+      "hitCount": 2,
+      "lastSeenAt": 1789620559797,
+      "checkedAt": 1789620559797,
+      "sources": [
+        "https://tianchi.aliyun.com/competition/entrance/532487/introduction",
+        "https://cn.aliyun.com/page-source/tianchi/university/competition_rules?from_alibabacloud="
+      ]
+    },
+    {
+      "id": "baidu-astar",
+      "status": "unverified",
+      "hitCount": 0,
+      "lastSeenAt": 0,
+      "checkedAt": 0,
+      "sources": []
+    },
+    {
+      "id": "xfyun",
+      "status": "unverified",
+      "hitCount": 0,
+      "lastSeenAt": 0,
+      "checkedAt": 0,
+      "sources": []
+    },
+    {
+      "id": "ant-atec",
+      "status": "unverified",
+      "hitCount": 0,
+      "lastSeenAt": 0,
+      "checkedAt": 0,
+      "sources": []
+    },
+    {
+      "id": "jd-explorer",
+      "status": "unverified",
+      "hitCount": 0,
+      "lastSeenAt": 0,
+      "checkedAt": 0,
+      "sources": []
+    },
+    {
+      "id": "cmcc-wutong",
+      "status": "unverified",
+      "hitCount": 0,
+      "lastSeenAt": 0,
+      "checkedAt": 0,
+      "sources": []
+    },
+    {
+      "id": "ospp",
+      "status": "unverified",
+      "hitCount": 0,
+      "lastSeenAt": 0,
+      "checkedAt": 0,
+      "sources": []
+    },
+    {
+      "id": "cspro",
+      "status": "unverified",
+      "hitCount": 0,
+      "lastSeenAt": 0,
+      "checkedAt": 0,
+      "sources": []
+    },
+    {
+      "id": "asc",
+      "status": "unverified",
+      "hitCount": 0,
+      "lastSeenAt": 0,
+      "checkedAt": 0,
+      "sources": []
+    },
+    {
+      "id": "isc-sc",
+      "status": "unverified",
+      "hitCount": 0,
+      "lastSeenAt": 0,
+      "checkedAt": 0,
+      "sources": []
+    },
+    {
+      "id": "icpc-wf",
+      "status": "active",
+      "hitCount": 1,
+      "lastSeenAt": 1789620559797,
+      "checkedAt": 1789620559797,
+      "sources": [
+        "https://github.com/Xiamen-University-Malaysia/XMUM_ICPC_CCPC/blob/main/Proposal_2026-03-06_CN.pdf?_x_output_type_b6db407c4_=embedded_pdf#2#2"
+      ]
+    },
+    {
+      "id": "kaggle",
+      "status": "active",
+      "hitCount": 2,
+      "lastSeenAt": 1789623106386,
+      "checkedAt": 1789623106386,
+      "sources": [
+        "https://github.com/Galaxy-Dawn/claude-scholar/blob/main/skills/kaggle-learner/references/knowledge/nlp/aimo-2-2025.md#1",
+        "https://www.kaggle.com/competitions/ai-mathematical-olympiad-progress-prize-3?trk=public_post_comment-text#1"
+      ]
+    },
+    {
+      "id": "kdd-cup",
+      "status": "unverified",
+      "hitCount": 0,
+      "lastSeenAt": 0,
+      "checkedAt": 0,
+      "sources": []
+    },
+    {
+      "id": "neurips-comp",
+      "status": "active",
+      "hitCount": 3,
+      "lastSeenAt": 1789620559797,
+      "checkedAt": 1789620559797,
+      "sources": [
+        "https://neurips.cc/Conferences/2026/CallForCompetitions",
+        "https://phemex.com/news/article/neurips-2026-seeks-proposals-for-llm-evaluation-and-social-impact-competitions-74099",
+        "https://news.superex.com/flash/46541.html"
+      ]
+    },
+    {
+      "id": "miccai-challenge",
+      "status": "unverified",
+      "hitCount": 0,
+      "lastSeenAt": 0,
+      "checkedAt": 0,
+      "sources": []
+    },
+    {
+      "id": "acmmm-gc",
+      "status": "unverified",
+      "hitCount": 0,
+      "lastSeenAt": 0,
+      "checkedAt": 0,
+      "sources": []
+    },
+    {
+      "id": "semeval",
+      "status": "unverified",
+      "hitCount": 0,
+      "lastSeenAt": 0,
+      "checkedAt": 0,
+      "sources": []
+    },
+    {
+      "id": "trec",
+      "status": "unverified",
+      "hitCount": 0,
+      "lastSeenAt": 0,
+      "checkedAt": 0,
+      "sources": []
+    },
+    {
+      "id": "robomaster",
+      "status": "unverified",
+      "hitCount": 0,
+      "lastSeenAt": 0,
+      "checkedAt": 0,
+      "sources": []
+    },
+    {
+      "id": "imagine-cup",
+      "status": "unverified",
+      "hitCount": 0,
+      "lastSeenAt": 0,
+      "checkedAt": 0,
+      "sources": []
+    },
+    {
+      "id": "meta-hacker-cup",
+      "status": "unverified",
+      "hitCount": 0,
+      "lastSeenAt": 0,
+      "checkedAt": 0,
+      "sources": []
+    },
+    {
+      "id": "paddle-hackathon",
+      "status": "active",
+      "hitCount": 1,
+      "lastSeenAt": 1789623106386,
+      "checkedAt": 1789623106386,
+      "sources": [
+        "https://www.khadas.cn/%e5%8d%b3%e5%88%bb%e6%8a%a5%e5%90%8d%ef%bd%9c%e9%a3%9e%e6%a1%a8%e9%bb%91%e5%ae%a2%e9%a9%ac%e6%8b%89%e6%9d%be%e7%ac%ac%e4%b8%89%e6%9c%9fkhadas%e4%bb%bb%e5%8a%a1%e7%9b%9b%e5%a4%8f%e7%99%bb%e5%9c%ba/"
+      ]
+    },
+    {
+      "id": "hw-dev",
+      "status": "active",
+      "hitCount": 2,
+      "lastSeenAt": 1789623106386,
+      "checkedAt": 1789623106386,
+      "sources": [
+        "https://competition.huaweicloud.com/HuaweiDeveloperCompetition2023/home?utm_source=csdn&utm_medium=off&utm_campaign=Huawei_competition2023-pdev&utm_content=guanggaowei",
+        "https://finance.sina.com.cn/jjxw/2025-06-30/doc-infcusic6912664.shtml#1"
+      ]
+    },
+    {
+      "id": "openharmony-dev",
+      "status": "active",
+      "hitCount": 5,
+      "lastSeenAt": 1789623106386,
+      "checkedAt": 1789623106386,
+      "sources": [
+        "https://competition.openatom.tech/competitionInfo?id=9fdd955cb77370bee9393e8449d5dd56#heading-0-0",
+        "https://openharmonycrossplatform.csdn.net/6a8eb38b662f9a54cba0ae8b.html",
+        "https://e.huawei.com/marketingcloud/pep/asset/20000001/Material/a738a40fe51144dfbad3c4d238b54a12/M3T1A669N1071063653771616507/OpenHarmony%E7%89%A9%E8%81%94%E7%BD%91%E5%BA%94%E7%94%A8%E5%BC%80%E5%8F%91%E8%B5%9B%E9%81%93-%E6%8A%A5%E5%90%8D%E5%8F%8A%E8%80%83%E7%BA%B2%E8%B5%8B%E8%83%BDV3.pdf#1%231",
+        "https://competition.gitcode.com/competition/2074797483593228289/intro",
+        "https://openharmonycrossplatform.csdn.net/6a58a60010ee7a33f28e2730.html"
+      ]
+    },
+    {
+      "id": "atomgit-contest",
+      "status": "active",
+      "hitCount": 5,
+      "lastSeenAt": 1789623106386,
+      "checkedAt": 1789623106386,
+      "sources": [
+        "https://competition.openatom.tech/competitionInfo?id=9fdd955cb77370bee9393e8449d5dd56#heading-0-0",
+        "https://competition.openatom.tech/competitionInfo?id=d83eb10e091c841c71230ad8ecb809fe#heading-0-0",
+        "https://competition.openatom.tech/competitionInfo?id=92ddad640f5de0811f415d38018fb8d8#heading-0-0",
+        "https://gs.cuit.edu.cn/info/1020/2007.htm",
+        "http://www.graduate.nuaa.edu.cn/2026/0622/c2145a402380/page.htm"
+      ]
+    },
+    {
+      "id": "aliyun-dev",
+      "status": "unverified",
+      "hitCount": 0,
+      "lastSeenAt": 0,
+      "checkedAt": 0,
+      "sources": []
+    },
+    {
+      "id": "tencent-cloud-hack",
+      "status": "active",
+      "hitCount": 2,
+      "lastSeenAt": 1789623106386,
+      "checkedAt": 1789623106386,
+      "sources": [
+        "https://job.xjtu.edu.cn/frontpage/xjtu/html/newsDetail.html?id=74ec8f127ee54acd81681e8aa976074f#1#1",
+        "https://www.sues.edu.cn/_t528/86/1e/c17466a296478/page.psp#1"
+      ]
+    },
+    {
+      "id": "bytedance-hack",
+      "status": "unverified",
+      "hitCount": 0,
+      "lastSeenAt": 0,
+      "checkedAt": 0,
+      "sources": []
+    },
+    {
+      "id": "meituan-hack",
+      "status": "unverified",
+      "hitCount": 0,
+      "lastSeenAt": 0,
+      "checkedAt": 0,
+      "sources": []
+    },
+    {
+      "id": "jd-hack",
+      "status": "unverified",
+      "hitCount": 0,
+      "lastSeenAt": 0,
+      "checkedAt": 0,
+      "sources": []
+    },
+    {
+      "id": "xiaomi-hack",
+      "status": "active",
+      "hitCount": 1,
+      "lastSeenAt": 1789623106386,
+      "checkedAt": 1789623106386,
+      "sources": [
+        "https://www.sohu.com/a/1040629436_121124306?scm=10001.325_13-325_13.0.0-0-0-0-0.5_1334&spm=smpc.channel_248..4.1782226781624Uq54M1B_324"
+      ]
+    },
+    {
+      "id": "ant-hackathon",
+      "status": "unverified",
+      "hitCount": 0,
+      "lastSeenAt": 0,
+      "checkedAt": 0,
+      "sources": []
+    },
+    {
+      "id": "ms-hackathon",
+      "status": "active",
+      "hitCount": 1,
+      "lastSeenAt": 1789623106386,
+      "checkedAt": 1789623106386,
+      "sources": [
+        "https://www.dqindia.com/upskilling/microsoft-hackathon-2026-a-global-stage-for-student-ai-innovation-10954790#1"
+      ]
+    },
+    {
+      "id": "google-devfest",
+      "status": "active",
+      "hitCount": 4,
+      "lastSeenAt": 1789623106386,
+      "checkedAt": 1789623106386,
+      "sources": [
+        "https://gdg.community.dev/events/details/google-gdg-central-florida-presents-devfest-hackathon-2026-build-innovate-amp-connect/#1",
+        "https://devfestflorida.com/?trk=public_post-text",
+        "https://gdg.community.dev/events/details/google-gdg-salt-lake-city-presents-devfest-slc-2026/?utm_source=dgc_campaign&utm_medium=website&utm_campaign=dgc-community-map&utm_id=dgc-community-map",
+        "https://gdg.community.dev/events/details/google-gdg-on-campus-florida-international-university-presents-build-with-ai-devfest-miami-fiu-ai-hackathon-edition-spring-2026/#skip-target#1"
+      ]
+    },
+    {
+      "id": "google-solution-challenge",
+      "status": "unverified",
+      "hitCount": 0,
+      "lastSeenAt": 0,
+      "checkedAt": 0,
+      "sources": []
+    },
+    {
+      "id": "nvidia-hack",
+      "status": "unverified",
+      "hitCount": 0,
+      "lastSeenAt": 0,
+      "checkedAt": 0,
+      "sources": []
+    },
+    {
+      "id": "oneapi-hack",
+      "status": "unverified",
+      "hitCount": 0,
+      "lastSeenAt": 0,
+      "checkedAt": 0,
+      "sources": []
+    }
+  ],
+  "leads": [
+    {
+      "url": "https://cug.91wllm.cn/campus/view/id/1003670",
+      "title": "中国地质大学就业信息网",
+      "snippet": "",
+      "query": "黑客松 报名 开发者 奖金",
+      "tags": [],
+      "matchedIds": [],
+      "firstSeenAt": 1789623106386,
+      "seenCount": 1,
+      "lastSeenAt": 1789623106386
+    },
+    {
+      "url": "https://zhuanlan.zhihu.com/p/2079272738301147131?utm_medium=openapi_platform&utm_source=e10c3ad29e50",
+      "title": "9月黑客松报名开启|双赛道焕新,新老项目同台角逐万元奖金 - 知乎",
+      "snippet": "",
+      "query": "黑客松 报名 开发者 奖金",
+      "tags": [
+        "hackathon",
+        "prize"
+      ],
+      "matchedIds": [],
+      "firstSeenAt": 1789623106386,
+      "seenCount": 1,
+      "lastSeenAt": 1789623106386
+    },
+    {
+      "url": "https://zhuanlan.zhihu.com/p/2051012010909906820?utm_medium=openapi_platform&utm_source=e10c3ad29e50",
+      "title": "$20,000 奖金,$100,000 算力扶持 |「GENESIS 黑客松」报名倒计时 - 知乎",
+      "snippet": "",
+      "query": "黑客松 报名 开发者 奖金",
+      "tags": [
+        "hackathon",
+        "prize"
+      ],
+      "matchedIds": [],
+      "firstSeenAt": 1789623106386,
+      "seenCount": 1,
+      "lastSeenAt": 1789623106386
+    },
+    {
+      "url": "https://adventure-x.org/zh?issue=029&utm_source=Newsletter&utm_medium=email&utm_campaign=FatbobmansSwiftWeekly",
+      "title": "AdventureX 2026 | 中国最大黑客松",
+      "snippet": "",
+      "query": "黑客松 报名 开发者 奖金",
+      "tags": [
+        "hackathon"
+      ],
+      "matchedIds": [],
+      "firstSeenAt": 1789623106386,
+      "seenCount": 1,
+      "lastSeenAt": 1789623106386
+    },
+    {
+      "url": "https://job.xjtu.edu.cn/frontpage/xjtu/html/newsDetail.html?id=74ec8f127ee54acd81681e8aa976074f#1#1",
+      "title": "就业实习-腾讯云黑客松-游戏开发挑战赛",
+      "snippet": "",
+      "query": "黑客松 报名 开发者 奖金",
+      "tags": [
+        "hackathon",
+        "internship"
+      ],
+      "matchedIds": [
+        "tencent-cloud-hack"
+      ],
+      "firstSeenAt": 1789623106386,
+      "seenCount": 1,
+      "lastSeenAt": 1789623106386
+    },
+    {
+      "url": "https://www.alibabacloud.com/zh/campaign/uae_ai_hackathon_2025?_p_lc=1&utm_content=m_1000405941#1",
+      "title": "Alibaba Cloud UAE AI Hackathon 2025 - 黑客马拉松概览",
+      "snippet": "",
+      "query": "黑客马拉松 大厂 报名 2025",
+      "tags": [
+        "hackathon"
+      ],
+      "matchedIds": [],
+      "firstSeenAt": 1789623106386,
+      "seenCount": 1,
+      "lastSeenAt": 1789623106386
+    },
+    {
+      "url": "https://developers.google.com/events?authuser=0&hl=zh-cn#1",
+      "title": "即将举办的开发者活动和会议 - Google for Developers - 即将举办的活动",
+      "snippet": "",
+      "query": "黑客马拉松 大厂 报名 2025",
+      "tags": [],
+      "matchedIds": [],
+      "firstSeenAt": 1789623106386,
+      "seenCount": 1,
+      "lastSeenAt": 1789623106386
+    },
+    {
+      "url": "https://developers.google.cn/events?authuser=6&hl=zh-cn#1",
+      "title": "即将举办的开发者活动和会议 - Google for Developers - 即将举办的活动",
+      "snippet": "",
+      "query": "黑客马拉松 大厂 报名 2025",
+      "tags": [],
+      "matchedIds": [],
+      "firstSeenAt": 1789623106386,
+      "seenCount": 1,
+      "lastSeenAt": 1789623106386
+    },
+    {
+      "url": "https://developers.google.cn/events?authuser=2&%3Bhl=zh-tw&hl=zh-tw#1",
+      "title": "近期開發人員活動與會議 - Google for Developers - 近期活動",
+      "snippet": "",
+      "query": "黑客马拉松 大厂 报名 2025",
+      "tags": [],
+      "matchedIds": [],
+      "firstSeenAt": 1789623106386,
+      "seenCount": 1,
+      "lastSeenAt": 1789623106386
+    },
+    {
+      "url": "https://aws.amazon.com/startups/events/aws-generative-ai-hackathon-challenge-2025?sc_channel=sm&sc_publisher=TWITTER&sc_country=global&sc_geo=GLOBAL&sc_outcome=awareness&sc_category=Amazon+Q&linkId=838124054&lang=pt-BR#1",
+      "title": "AWS Generative AI Hackathon Challenge 2025 | AWS Startups - - Events",
+      "snippet": "",
+      "query": "黑客马拉松 大厂 报名 2025",
+      "tags": [
+        "hackathon"
+      ],
+      "matchedIds": [],
+      "firstSeenAt": 1789623106386,
+      "seenCount": 1,
+      "lastSeenAt": 1789623106386
+    },
+    {
+      "url": "https://cug.91wllm.cn/en/campus/view/id/1003670",
+      "title": "[招聘公告]MoonBit 实习秋招",
+      "snippet": "",
+      "query": "开发者大赛 实习直通 面试绿色通道",
+      "tags": [
+        "internship"
+      ],
+      "matchedIds": [],
+      "firstSeenAt": 1789623106386,
+      "seenCount": 1,
+      "lastSeenAt": 1789623106386
+    },
+    {
+      "url": "https://my.oschina.net/agora/blog/19735141#1",
+      "title": "RTE 开发者社区 × 微信小程序开发大赛，最高十万元奖金，入围获微信面试机会！ - OSC 公众号",
+      "snippet": "",
+      "query": "开发者大赛 实习直通 面试绿色通道",
+      "tags": [
+        "internship",
+        "prize"
+      ],
+      "matchedIds": [],
+      "firstSeenAt": 1789623106386,
+      "seenCount": 1,
+      "lastSeenAt": 1789623106386
+    },
+    {
+      "url": "https://testerhome.com/topics/44590",
+      "title": "AI测试 RTE 开发者社区 × 微信小程序开发大赛，最高十万元奖金，入围获微信面试机会！",
+      "snippet": "",
+      "query": "开发者大赛 实习直通 面试绿色通道",
+      "tags": [
+        "internship",
+        "prize"
+      ],
+      "matchedIds": [],
+      "firstSeenAt": 1789623106386,
+      "seenCount": 1,
+      "lastSeenAt": 1789623106386
+    },
+    {
+      "url": "https://zhuanlan.zhihu.com/p/2038326850829685260",
+      "title": "15 万奖金池、实习秋招直通：MoonBit & CCF 开源创新大赛报名开启中！",
+      "snippet": "",
+      "query": "开发者大赛 实习直通 面试绿色通道",
+      "tags": [
+        "internship",
+        "prize"
+      ],
+      "matchedIds": [],
+      "firstSeenAt": 1789623106386,
+      "seenCount": 1,
+      "lastSeenAt": 1789623106386
+    },
+    {
+      "url": "https://github.com/PaddlePaddle/Paddle/issues/77429#1",
+      "title": "【Hackathon 10th】开源贡献个人挑战赛 · 春节特别季 · Issue #77429 · PaddlePaddle/Paddle - Skip to content",
+      "snippet": "",
+      "query": "飞桨黑客松 报名",
+      "tags": [
+        "hackathon"
+      ],
+      "matchedIds": [],
+      "firstSeenAt": 1789623106386,
+      "seenCount": 1,
+      "lastSeenAt": 1789623106386
+    },
+    {
+      "url": "https://www.paddlepaddle.org.cn/documentation/docs/zh/guides/10_contribution/hackathon_cn.html",
+      "title": "一、活动介绍-使用文档-PaddlePaddle深度学习平台",
+      "snippet": "",
+      "query": "飞桨黑客松 报名",
+      "tags": [],
+      "matchedIds": [],
+      "firstSeenAt": 1789623106386,
+      "seenCount": 1,
+      "lastSeenAt": 1789623106386
+    },
+    {
+      "url": "https://github.com/PaddlePaddle/Paddle/issues/76977",
+      "title": "【HACKATHON 10th Code Camp】护航计划集训营（提前批） · Issue #76977 · PaddlePaddle/Paddle",
+      "snippet": "",
+      "query": "飞桨黑客松 报名",
+      "tags": [
+        "hackathon"
+      ],
+      "matchedIds": [],
+      "firstSeenAt": 1789623106386,
+      "seenCount": 1,
+      "lastSeenAt": 1789623106386
+    },
+    {
+      "url": "https://www.khadas.cn/%e5%8d%b3%e5%88%bb%e6%8a%a5%e5%90%8d%ef%bd%9c%e9%a3%9e%e6%a1%a8%e9%bb%91%e5%ae%a2%e9%a9%ac%e6%8b%89%e6%9d%be%e7%ac%ac%e4%b8%89%e6%9c%9fkhadas%e4%bb%bb%e5%8a%a1%e7%9b%9b%e5%a4%8f%e7%99%bb%e5%9c%ba/",
+      "title": "飞桨黑客马拉松第三期Khadas任务盛夏登场，等你挑战",
+      "snippet": "",
+      "query": "飞桨黑客松 报名",
+      "tags": [
+        "hackathon"
+      ],
+      "matchedIds": [
+        "paddle-hackathon"
+      ],
+      "firstSeenAt": 1789623106386,
+      "seenCount": 1,
+      "lastSeenAt": 1789623106386
+    },
+    {
+      "url": "https://developer.huawei.com.cn/consumer/cn/activity/digixActivity/digixcmsdetail/101750143863263087",
+      "title": "2025 HarmonyOS 创新赛",
+      "snippet": "",
+      "query": "华为开发者大赛 报名 奖金",
+      "tags": [],
+      "matchedIds": [],
+      "firstSeenAt": 1789623106386,
+      "seenCount": 1,
+      "lastSeenAt": 1789623106386
+    },
+    {
+      "url": "https://www.hk01.com/%E7%B6%B2%E7%A7%913.0/60288990/2025%E9%96%8B%E7%99%BC%E8%80%85%E5%A4%A7%E8%B3%BD%E5%95%9F%E5%8B%95-%E8%B4%8F%E8%B5%B0%E7%B8%BD%E7%8F%BE%E9%87%913-4%E8%90%AC%E7%BE%8E%E5%85%83-%E9%A6%99%E6%B8%AF%E8%B7%AF%E6%BC%94-%E5%89%B5%E6%A5%AD%E6%94%AF%E6%8F%B4",
+      "title": "2025開發者大賽啟動!贏走總現金3.4萬美元、香港路演、創業支援",
+      "snippet": "",
+      "query": "华为开发者大赛 报名 奖金",
+      "tags": [],
+      "matchedIds": [],
+      "firstSeenAt": 1789623106386,
+      "seenCount": 1,
+      "lastSeenAt": 1789623106386
+    },
+    {
+      "url": "https://competition.huaweicloud.com/HuaweiDeveloperCompetition2023/home?utm_source=csdn&utm_medium=off&utm_campaign=Huawei_competition2023-pdev&utm_content=guanggaowei",
+      "title": "2023华为开发者大赛",
+      "snippet": "",
+      "query": "华为开发者大赛 报名 奖金",
+      "tags": [
+        "hackathon"
+      ],
+      "matchedIds": [
+        "hw-dev"
+      ],
+      "firstSeenAt": 1789623106386,
+      "seenCount": 1,
+      "lastSeenAt": 1789623106386
+    },
+    {
+      "url": "https://finance.sina.com.cn/jjxw/2025-06-30/doc-infcusic6912664.shtml#1",
+      "title": "华为开发者大赛·贵州赛区 全球报名通道开启 - 经济新闻滚动 > 正文",
+      "snippet": "",
+      "query": "华为开发者大赛 报名 奖金",
+      "tags": [
+        "hackathon"
+      ],
+      "matchedIds": [
+        "hw-dev"
+      ],
+      "firstSeenAt": 1789623106386,
+      "seenCount": 1,
+      "lastSeenAt": 1789623106386
+    },
+    {
+      "url": "https://www.hikunpeng.com/zh/developer/contests/kunpeng-competition2025/",
+      "title": "鲲鹏创新大赛2025-鲲鹏社区",
+      "snippet": "",
+      "query": "华为开发者大赛 报名 奖金",
+      "tags": [],
+      "matchedIds": [],
+      "firstSeenAt": 1789623106386,
+      "seenCount": 1,
+      "lastSeenAt": 1789623106386
+    },
+    {
+      "url": "https://www.sues.edu.cn/_t528/86/1e/c17466a296478/page.psp#1",
+      "title": "关于参加腾讯云黑客松游戏开发挑战赛通知 - 关于参加腾讯云黑客松游戏开发挑战赛通知",
+      "snippet": "",
+      "query": "腾讯云 黑客松 报名",
+      "tags": [
+        "hackathon"
+      ],
+      "matchedIds": [
+        "tencent-cloud-hack"
+      ],
+      "firstSeenAt": 1789623106386,
+      "seenCount": 1,
+      "lastSeenAt": 1789623106386
+    },
+    {
+      "url": "https://www.yun88.com/qa/3690.html#1",
+      "title": "公司有AI产品但不知道怎么挖掘客户价值，参加黑客松能解决吗？-云巴巴 - 提问",
+      "snippet": "",
+      "query": "腾讯云 黑客松 报名",
+      "tags": [
+        "hackathon"
+      ],
+      "matchedIds": [],
+      "firstSeenAt": 1789623106386,
+      "seenCount": 1,
+      "lastSeenAt": 1789623106386
+    },
+    {
+      "url": "https://competehub.dev/zh/competitions/urlsd07c330bd43fc48ea0b3020f7993e37f",
+      "title": "腾讯云游戏开发黑客松・温州站",
+      "snippet": "",
+      "query": "腾讯云 黑客松 报名",
+      "tags": [
+        "hackathon"
+      ],
+      "matchedIds": [],
+      "firstSeenAt": 1789623106386,
+      "seenCount": 1,
+      "lastSeenAt": 1789623106386
+    },
+    {
+      "url": "https://competehub.dev/zh/competitions/devpost30686",
+      "title": "抖音科技节 2026",
+      "snippet": "",
+      "query": "字节跳动 黑客马拉松 报名",
+      "tags": [],
+      "matchedIds": [],
+      "firstSeenAt": 1789623106386,
+      "seenCount": 1,
+      "lastSeenAt": 1789623106386
+    },
+    {
+      "url": "https://www.douyin.com/shipin/7645883391187044352#2",
+      "title": "相关视频 - 今年大厂都在办 ai 黑客松，四十八小时做出一个 ai 产品，赢了能拿十万奖金，直通大场面试",
+      "snippet": "",
+      "query": "字节跳动 黑客马拉松 报名",
+      "tags": [
+        "hackathon",
+        "internship",
+        "prize"
+      ],
+      "matchedIds": [],
+      "firstSeenAt": 1789623106386,
+      "seenCount": 1,
+      "lastSeenAt": 1789623106386
+    },
+    {
+      "url": "https://competehub.dev/zh/competitions/luma429e4ca11203a94da8a05e317c1e5608",
+      "title": "阿里云 x Atlas 人工智能黑客松 - AI赛事通 | 工程开发竞赛",
+      "snippet": "",
+      "query": "阿里云 开发者大赛 黑客松 报名",
+      "tags": [
+        "hackathon"
+      ],
+      "matchedIds": [],
+      "firstSeenAt": 1789623106386,
+      "seenCount": 1,
+      "lastSeenAt": 1789623106386
+    },
+    {
+      "url": "https://competition.openatom.tech/competitionInfo?id=9fdd955cb77370bee9393e8449d5dd56#heading-0-0",
+      "title": "第二届OpenHarmony创新应用挑战赛-开放原子大赛",
+      "snippet": "",
+      "query": "OpenHarmony 开发者大赛 报名",
+      "tags": [],
+      "matchedIds": [
+        "openharmony-dev",
+        "atomgit-contest"
+      ],
+      "firstSeenAt": 1789623106386,
+      "seenCount": 1,
+      "lastSeenAt": 1789623106386
+    },
+    {
+      "url": "https://openharmonycrossplatform.csdn.net/6a8eb38b662f9a54cba0ae8b.html",
+      "title": "开源鸿蒙大学生创新大赛奖金升级！联动多场活动，整体总奖金池达 238 万元",
+      "snippet": "",
+      "query": "OpenHarmony 开发者大赛 报名",
+      "tags": [
+        "prize"
+      ],
+      "matchedIds": [
+        "openharmony-dev"
+      ],
+      "firstSeenAt": 1789623106386,
+      "seenCount": 1,
+      "lastSeenAt": 1789623106386
+    },
+    {
+      "url": "https://e.huawei.com/marketingcloud/pep/asset/20000001/Material/a738a40fe51144dfbad3c4d238b54a12/M3T1A669N1071063653771616507/OpenHarmony%E7%89%A9%E8%81%94%E7%BD%91%E5%BA%94%E7%94%A8%E5%BC%80%E5%8F%91%E8%B5%9B%E9%81%93-%E6%8A%A5%E5%90%8D%E5%8F%8A%E8%80%83%E7%BA%B2%E8%B5%8B%E8%83%BDV3.pdf#1%231",
+      "title": "OpenHarmony物联网应用开发 赛道报名及考纲赋能",
+      "snippet": "",
+      "query": "OpenHarmony 开发者大赛 报名",
+      "tags": [],
+      "matchedIds": [
+        "openharmony-dev"
+      ],
+      "firstSeenAt": 1789623106386,
+      "seenCount": 1,
+      "lastSeenAt": 1789623106386
+    },
+    {
+      "url": "https://competition.gitcode.com/competition/2074797483593228289/intro",
+      "title": "2026开源鸿蒙大学生创新大赛 · 赛道三：校园与创新应用赛道",
+      "snippet": "",
+      "query": "OpenHarmony 开发者大赛 报名",
+      "tags": [],
+      "matchedIds": [
+        "openharmony-dev"
+      ],
+      "firstSeenAt": 1789623106386,
+      "seenCount": 1,
+      "lastSeenAt": 1789623106386
+    },
+    {
+      "url": "https://openharmonycrossplatform.csdn.net/6a58a60010ee7a33f28e2730.html",
+      "title": "开源鸿蒙大学生创新大赛三大赛道全面开赛，176 万奖金池已就位",
+      "snippet": "",
+      "query": "OpenHarmony 开发者大赛 报名",
+      "tags": [
+        "prize"
+      ],
+      "matchedIds": [
+        "openharmony-dev"
+      ],
+      "firstSeenAt": 1789623106386,
+      "seenCount": 1,
+      "lastSeenAt": 1789623106386
+    },
+    {
+      "url": "https://competition.openatom.tech/competitionInfo?id=d83eb10e091c841c71230ad8ecb809fe#heading-0-0",
+      "title": "第四届开放原子大赛操作系统专项赛暨中国研究生操作系统开源创新大赛-开放原子大赛",
+      "snippet": "",
+      "query": "开放原子开源大赛 报名",
+      "tags": [],
+      "matchedIds": [
+        "atomgit-contest"
+      ],
+      "firstSeenAt": 1789623106386,
+      "seenCount": 1,
+      "lastSeenAt": 1789623106386
+    },
+    {
+      "url": "https://competition.openatom.tech/competitionInfo?id=92ddad640f5de0811f415d38018fb8d8#heading-0-0",
+      "title": "测试赛题_3-开放原子大赛",
+      "snippet": "",
+      "query": "开放原子开源大赛 报名",
+      "tags": [],
+      "matchedIds": [
+        "atomgit-contest"
+      ],
+      "firstSeenAt": 1789623106386,
+      "seenCount": 1,
+      "lastSeenAt": 1789623106386
+    },
+    {
+      "url": "https://gs.cuit.edu.cn/info/1020/2007.htm",
+      "title": "关于组织参加第三届中国研究生操作系统开源创新大赛暨开放原子大赛操作系统专项赛的通知-研究生院（学科建设办公室）",
+      "snippet": "",
+      "query": "开放原子开源大赛 报名",
+      "tags": [],
+      "matchedIds": [
+        "atomgit-contest"
+      ],
+      "firstSeenAt": 1789623106386,
+      "seenCount": 1,
+      "lastSeenAt": 1789623106386
+    },
+    {
+      "url": "http://www.graduate.nuaa.edu.cn/2026/0622/c2145a402380/page.htm",
+      "title": "关于组织参加第三届中国研究生操作系统开源创新大赛暨开放原子大赛操作系统专项赛的通知",
+      "snippet": "",
+      "query": "开放原子开源大赛 报名",
+      "tags": [],
+      "matchedIds": [
+        "atomgit-contest"
+      ],
+      "firstSeenAt": 1789623106386,
+      "seenCount": 1,
+      "lastSeenAt": 1789623106386
+    },
+    {
+      "url": "https://www.gm7.org/archives/95992#1",
+      "title": "第四届白帽赏金挑战赛正式开启！诚邀全网顶尖白帽，共探安全边界 - Skip to content",
+      "snippet": "",
+      "query": "美团 京东 小米 黑客马拉松 报名",
+      "tags": [],
+      "matchedIds": [],
+      "firstSeenAt": 1789623106386,
+      "seenCount": 1,
+      "lastSeenAt": 1789623106386
+    },
+    {
+      "url": "https://www.sohu.com/a/1040629436_121124306?scm=10001.325_13-325_13.0.0-0-0-0-0.5_1334&spm=smpc.channel_248..4.1782226781624Uq54M1B_324",
+      "title": "活动｜2026小米集团黑客马拉松，盛夏来袭！",
+      "snippet": "",
+      "query": "美团 京东 小米 黑客马拉松 报名",
+      "tags": [
+        "hackathon"
+      ],
+      "matchedIds": [
+        "xiaomi-hack"
+      ],
+      "firstSeenAt": 1789623106386,
+      "seenCount": 1,
+      "lastSeenAt": 1789623106386
+    },
+    {
+      "url": "https://baike.baidu.com/item/%E5%BE%AE%E8%BD%AF%E6%A0%A1%E5%9B%AD%E5%A4%A7%E4%BD%BF/2148478?anchor=1&fragment=1#1#1",
+      "title": "微软校园大使 - 微软公司针对高校大学生在全球范围内所设立的项目",
+      "snippet": "",
+      "query": "微软 黑客松 学生 报名",
+      "tags": [],
+      "matchedIds": [],
+      "firstSeenAt": 1789623106386,
+      "seenCount": 1,
+      "lastSeenAt": 1789623106386
+    },
+    {
+      "url": "https://www.dqindia.com/upskilling/microsoft-hackathon-2026-a-global-stage-for-student-ai-innovation-10954790#1",
+      "title": "Microsoft hackathon 2026; a global stage for student AI innovation - Microsoft hackathon 2026; a global stage for student AI innovation",
+      "snippet": "",
+      "query": "微软 黑客松 学生 报名",
+      "tags": [
+        "hackathon"
+      ],
+      "matchedIds": [
+        "ms-hackathon"
+      ],
+      "firstSeenAt": 1789623106386,
+      "seenCount": 1,
+      "lastSeenAt": 1789623106386
+    },
+    {
+      "url": "https://www.tyc.edu.tw/News_Content.aspx?n=5143&s=1621033",
+      "title": "高雄女子高級中學與Microsoft合作辦理「第六屆中學生黑客松」競賽",
+      "snippet": "",
+      "query": "微软 黑客松 学生 报名",
+      "tags": [
+        "hackathon"
+      ],
+      "matchedIds": [],
+      "firstSeenAt": 1789623106386,
+      "seenCount": 1,
+      "lastSeenAt": 1789623106386
+    },
+    {
+      "url": "https://developer.nvidia.com/?display=%2fsearch%2fnode%2fcascadecuda-llvm-compilercontent%2fsix-ways-saxpy",
+      "title": "Become an NVIDIA Developer Champion",
+      "snippet": "",
+      "query": "NVIDIA 开发者挑战赛 报名",
+      "tags": [],
+      "matchedIds": [],
+      "firstSeenAt": 1789623106386,
+      "seenCount": 1,
+      "lastSeenAt": 1789623106386
+    },
+    {
+      "url": "https://www.163.com/dy/article/L60LBO800552BFKV.html#1",
+      "title": "报名启动！第三届 NVIDIA DGX Spark 黑客松火热报名中！",
+      "snippet": "",
+      "query": "NVIDIA 开发者挑战赛 报名",
+      "tags": [
+        "hackathon"
+      ],
+      "matchedIds": [],
+      "firstSeenAt": 1789623106386,
+      "seenCount": 1,
+      "lastSeenAt": 1789623106386
+    },
+    {
+      "url": "https://www.nvidia.com/en-eu/ai-data-science/generative-ai/developer-contest-with-langchain/#1",
+      "title": "Generative AI Agents Developer Contest by NVIDIA & LangChain - Generative AI Agents Developer Contest by NVIDIA and LangChain",
+      "snippet": "",
+      "query": "NVIDIA 开发者挑战赛 报名",
+      "tags": [],
+      "matchedIds": [],
+      "firstSeenAt": 1789623106386,
+      "seenCount": 1,
+      "lastSeenAt": 1789623106386
+    },
+    {
+      "url": "https://www.163.com/dy/article/L09P10IK0552BFKV.html?spss=adap_pc&referFrom=",
+      "title": "报名启动！第二届 NVIDIA DGX Spark 黑客松正式开启",
+      "snippet": "",
+      "query": "NVIDIA 开发者挑战赛 报名",
+      "tags": [
+        "hackathon"
+      ],
+      "matchedIds": [],
+      "firstSeenAt": 1789623106386,
+      "seenCount": 1,
+      "lastSeenAt": 1789623106386
+    },
+    {
+      "url": "https://gdg.community.dev/events/details/google-gdg-central-florida-presents-devfest-hackathon-2026-build-innovate-amp-connect/#1",
+      "title": "DevFest Hackathon 2026: Build, Innovate & Connect | Google Developer Groups - DevFest Hackathon 2026: Build, Innovate & Connect",
+      "snippet": "",
+      "query": "Google DevFest 黑客松 报名",
+      "tags": [
+        "hackathon"
+      ],
+      "matchedIds": [
+        "google-devfest"
+      ],
+      "firstSeenAt": 1789623106386,
+      "seenCount": 1,
+      "lastSeenAt": 1789623106386
+    },
+    {
+      "url": "https://devfestflorida.com/?trk=public_post-text",
+      "title": "DevFest Hackathon 2026 | November 6–8",
+      "snippet": "",
+      "query": "Google DevFest 黑客松 报名",
+      "tags": [
+        "hackathon"
+      ],
+      "matchedIds": [
+        "google-devfest"
+      ],
+      "firstSeenAt": 1789623106386,
+      "seenCount": 1,
+      "lastSeenAt": 1789623106386
+    },
+    {
+      "url": "https://gdg.community.dev/events/details/google-gdg-salt-lake-city-presents-devfest-slc-2026/?utm_source=dgc_campaign&utm_medium=website&utm_campaign=dgc-community-map&utm_id=dgc-community-map",
+      "title": "DevFest SLC 2026 | Google Developer Groups",
+      "snippet": "",
+      "query": "Google DevFest 黑客松 报名",
+      "tags": [],
+      "matchedIds": [
+        "google-devfest"
+      ],
+      "firstSeenAt": 1789623106386,
+      "seenCount": 1,
+      "lastSeenAt": 1789623106386
+    },
+    {
+      "url": "https://gdg.community.dev/events/details/google-gdg-on-campus-florida-international-university-presents-build-with-ai-devfest-miami-fiu-ai-hackathon-edition-spring-2026/#skip-target#1",
+      "title": "Build with AI: DevFest Miami @ FIU + AI Hackathon Edition Spring 2026 | Google Developer Groups - Build with AI: DevFest Miami @ FIU + AI Hackathon Edition Spring 2026",
+      "snippet": "",
+      "query": "Google DevFest 黑客松 报名",
+      "tags": [
+        "hackathon"
+      ],
+      "matchedIds": [
+        "google-devfest"
+      ],
+      "firstSeenAt": 1789623106386,
+      "seenCount": 1,
+      "lastSeenAt": 1789623106386
+    },
+    {
+      "url": "https://linux.do/t/topic/2526410/19",
+      "title": "求助：2026上海谷歌开发者大会在哪报名的 - 搞七捻三 - LINUX DO",
+      "snippet": "",
+      "query": "Google DevFest 黑客松 报名",
+      "tags": [],
+      "matchedIds": [],
+      "firstSeenAt": 1789623106386,
+      "seenCount": 1,
+      "lastSeenAt": 1789623106386
+    },
+    {
+      "url": "https://www.zhidx.com/p/593813.html",
+      "title": "首届蚂蚁灵波具身大模型挑战赛正式启动",
+      "snippet": "",
+      "query": "蚂蚁 黑客马拉松 报名",
+      "tags": [],
+      "matchedIds": [],
+      "firstSeenAt": 1789623106386,
+      "seenCount": 1,
+      "lastSeenAt": 1789623106386
+    },
+    {
+      "url": "https://www.toutiao.com/article/7651431405972439602/?wid=1786280791493",
+      "title": "AFAC2026金融智能创新大赛开启全球报名 - 今日头条",
+      "snippet": "",
+      "query": "蚂蚁 黑客马拉松 报名",
+      "tags": [],
+      "matchedIds": [],
+      "firstSeenAt": 1789623106386,
+      "seenCount": 1,
+      "lastSeenAt": 1789623106386
+    },
+    {
+      "url": "https://caip.org.cn/news/detail?id=49079",
+      "title": "AI门户 · CAIP | AI资讯 | 首届蚂蚁灵波具身大模型挑战赛正式启动",
+      "snippet": "",
+      "query": "蚂蚁 黑客马拉松 报名",
+      "tags": [],
+      "matchedIds": [],
+      "firstSeenAt": 1789623106386,
+      "seenCount": 1,
+      "lastSeenAt": 1789623106386
+    },
+    {
+      "url": "https://kx.umi6.com/article/37850.html",
+      "title": "首届蚂蚁灵波具身大模型挑战赛正式启动",
+      "snippet": "",
+      "query": "蚂蚁 黑客马拉松 报名",
+      "tags": [],
+      "matchedIds": [],
+      "firstSeenAt": 1789623106386,
+      "seenCount": 1,
+      "lastSeenAt": 1789623106386
+    },
+    {
+      "url": "https://mp.weixin.qq.com/s?__biz=MzA3MTA0ODYyOA==&mid=2651267169&idx=1&sn=52c1838fdd206b58bbaf6ff9e1787543",
+      "title": "开发拼武艺，学霸领奖励 ｜ 参加闯关赛赢黑客松学习大礼包！",
+      "snippet": "",
+      "query": "mp.weixin.qq.com 黑客松 报名 奖金",
+      "tags": [
+        "hackathon",
+        "prize"
+      ],
+      "matchedIds": [],
+      "firstSeenAt": 1789623106386,
+      "seenCount": 1,
+      "lastSeenAt": 1789623106386
+    },
+    {
+      "url": "http://www.1zhengji.cn/zhengji/shufa/114542.html",
+      "title": "报名正式启动｜OPC创新黑客松大赛，和AI一起把想法变成生意",
+      "snippet": "",
+      "query": "mp.weixin.qq.com 黑客松 报名 奖金",
+      "tags": [
+        "hackathon"
+      ],
+      "matchedIds": [],
+      "firstSeenAt": 1789623106386,
+      "seenCount": 1,
+      "lastSeenAt": 1789623106386
+    },
+    {
+      "url": "https://hub.baai.ac.cn/view/50413",
+      "title": "HyperAI超神经 x 渝客松丨西南第一黑客松火力全开！",
+      "snippet": "",
+      "query": "mp.weixin.qq.com 黑客松 报名 奖金",
+      "tags": [
+        "hackathon"
+      ],
+      "matchedIds": [],
+      "firstSeenAt": 1789623106386,
+      "seenCount": 1,
+      "lastSeenAt": 1789623106386
+    },
+    {
+      "url": "https://m.163.com/dy/article/L6AUEE9B05169QGI.html?clickfrom=subscribe&referFrom=",
+      "title": "知乎黑客松校园新锐季——北科站",
+      "snippet": "",
+      "query": "mp.weixin.qq.com 黑客松 报名 奖金",
+      "tags": [
+        "hackathon"
+      ],
+      "matchedIds": [],
+      "firstSeenAt": 1789623106386,
+      "seenCount": 1,
+      "lastSeenAt": 1789623106386
+    },
+    {
+      "url": "https://leetcode.cn/discuss/post/3516321/huo-re-bao-ming-ing2022neoquan-qiu-kai-f-x262/",
+      "title": "火热报名ing|2022Neo全球开发者黑客松大赛首次启动 - 讨论 - 力扣（LeetCode）",
+      "snippet": "",
+      "query": "mp.weixin.qq.com 黑客松 报名 奖金",
+      "tags": [
+        "hackathon"
+      ],
+      "matchedIds": [],
+      "firstSeenAt": 1789623106386,
+      "seenCount": 1,
+      "lastSeenAt": 1789623106386
+    },
+    {
+      "url": "https://segmentfault.com/a/1190000048131987?utm_source=sf-similar-article",
+      "title": "RTE 开发者社区 × 微信小程序开发大赛，最高十万元奖金，入围获微信面试机会！",
+      "snippet": "",
+      "query": "微信公众号 开发者大赛 报名 实习直通",
+      "tags": [
+        "internship",
+        "prize"
+      ],
+      "matchedIds": [],
+      "firstSeenAt": 1789623106386,
+      "seenCount": 1,
+      "lastSeenAt": 1789623106386
+    },
+    {
+      "url": "https://cxcy.sut.edu.cn/info/1098/9232.htm#1",
+      "title": "（研）2026年中国研究生创新实践系列大赛的报名通知 - （研）2026年中国研究生创新实践系列大赛的报名通知",
+      "snippet": "",
+      "query": "中国研究生创新实践系列大赛 报名通知",
+      "tags": [],
+      "matchedIds": [
+        "yjs-series"
+      ],
+      "firstSeenAt": 1789620559797,
+      "seenCount": 2,
+      "lastSeenAt": 1789623106386
+    },
+    {
+      "url": "https://yjs.hbue.edu.cn/b7/1c/c8137a374556/page.htm",
+      "title": "中国研究生创新实践系列大赛“华为杯”第二十三届中国研究生数学建模竞赛申报通知",
+      "snippet": "",
+      "query": "中国研究生创新实践系列大赛 报名通知",
+      "tags": [],
+      "matchedIds": [
+        "yjs-series",
+        "yjs-mcm"
+      ],
+      "firstSeenAt": 1789620559797,
+      "seenCount": 2,
+      "lastSeenAt": 1789623106386
+    },
+    {
+      "url": "https://ygb.sdu.edu.cn/info/1011/20564.htm#1",
+      "title": "关于组织研究生参加2026年中国研究生创新实践系列大赛的通知-山东大学研究生之家 - 重要通知 / About 当前位置: 首页 / 正文",
+      "snippet": "",
+      "query": "中国研究生创新实践系列大赛 报名通知",
+      "tags": [],
+      "matchedIds": [
+        "yjs-series"
+      ],
+      "firstSeenAt": 1789620559797,
+      "seenCount": 2,
+      "lastSeenAt": 1789623106386
+    },
+    {
+      "url": "https://cxcy.ahu.edu.cn/2026/0601/c23531a393664/page.htm",
+      "title": "关于2026年中国研究生创新实践系列大赛的通知",
+      "snippet": "",
+      "query": "中国研究生创新实践系列大赛 报名通知",
+      "tags": [],
+      "matchedIds": [
+        "yjs-series"
+      ],
+      "firstSeenAt": 1789620559797,
+      "seenCount": 2,
+      "lastSeenAt": 1789623106386
+    },
+    {
+      "url": "https://gs.hubu.edu.cn/info/1039/11556.htm#1",
+      "title": "关于组织研究生参加2026年中国研究生创新实践系列大赛的通知 - 关于组织研究生参加2026年中国研究生创新实践系列大赛的通知",
+      "snippet": "",
+      "query": "中国研究生创新实践系列大赛 报名通知",
+      "tags": [],
+      "matchedIds": [
+        "yjs-series"
+      ],
+      "firstSeenAt": 1789620559797,
+      "seenCount": 2,
+      "lastSeenAt": 1789623106386
+    },
+    {
+      "url": "https://openjiuwen.com/en/news/news-artical?id=42",
+      "title": "报名开启！2026 CCF 大数据与计算智能大赛首批赛题正式发布",
+      "snippet": "",
+      "query": "CCF BDCI 大数据与计算智能大赛 报名",
+      "tags": [],
+      "matchedIds": [
+        "ccf-bdci"
+      ],
+      "firstSeenAt": 1789620559797,
+      "seenCount": 2,
+      "lastSeenAt": 1789623106386
+    },
+    {
+      "url": "https://www.xhby.net/content/s6a5debe0e4b04c44976a64cc.html",
+      "title": "2026 CCF大数据与计算智能大赛在芜湖正式启动",
+      "snippet": "",
+      "query": "CCF BDCI 大数据与计算智能大赛 报名",
+      "tags": [],
+      "matchedIds": [
+        "ccf-bdci"
+      ],
+      "firstSeenAt": 1789620559797,
+      "seenCount": 2,
+      "lastSeenAt": 1789623106386
+    },
+    {
+      "url": "https://www.xir.cn/races/bdci2025",
+      "title": "2025 CCF大数据与计算智能大赛",
+      "snippet": "",
+      "query": "CCF BDCI 大数据与计算智能大赛 报名",
+      "tags": [],
+      "matchedIds": [
+        "ccf-bdci"
+      ],
+      "firstSeenAt": 1789620559797,
+      "seenCount": 2,
+      "lastSeenAt": 1789623106386
+    },
+    {
+      "url": "http://dss.e-courses.cn:9000/Competition/Information/2023-02-03/731.html",
+      "title": "Web攻击检测与分类识别",
+      "snippet": "",
+      "query": "CCF BDCI 大数据与计算智能大赛 报名",
+      "tags": [],
+      "matchedIds": [],
+      "firstSeenAt": 1789620559797,
+      "seenCount": 2,
+      "lastSeenAt": 1789623106386
+    },
+    {
+      "url": "https://www.kaggle.com/competitions/ai-mathematical-olympiad-progress-prize-3?trk=public_post_comment-text#1",
+      "title": "AI Mathematical Olympiad - Progress Prize 3 - Kaggle uses cookies from Google to deliver and enhance the quality of its services and to analyze traffic",
+      "snippet": "",
+      "query": "Kaggle competition new 2025",
+      "tags": [],
+      "matchedIds": [
+        "kaggle"
+      ],
+      "firstSeenAt": 1789623106386,
+      "seenCount": 1,
+      "lastSeenAt": 1789623106386
+    },
+    {
+      "url": "https://www.kaggle.com/competitions/bind-reverse-shell-detection-challenge/overview/description",
+      "title": "Bind/Reverse Shell Detection Challenge",
+      "snippet": "",
+      "query": "Kaggle competition new 2025",
+      "tags": [],
+      "matchedIds": [],
+      "firstSeenAt": 1789623106386,
+      "seenCount": 1,
+      "lastSeenAt": 1789623106386
+    },
+    {
+      "url": "https://www.kaggle.com/competitions/keyword-spotting-mipt-2025/overview/evaluation",
+      "title": "Keyword Spotting",
+      "snippet": "",
+      "query": "Kaggle competition new 2025",
+      "tags": [],
+      "matchedIds": [],
+      "firstSeenAt": 1789620559797,
+      "seenCount": 2,
+      "lastSeenAt": 1789623106386
+    },
+    {
+      "url": "https://www.kaggle.com/competitions/neoai-2025-broken-bert/overview/abstract",
+      "title": "NEOAI 2025: Broken BERT",
+      "snippet": "",
+      "query": "Kaggle competition new 2025",
+      "tags": [],
+      "matchedIds": [],
+      "firstSeenAt": 1789620559797,
+      "seenCount": 2,
+      "lastSeenAt": 1789623106386
+    },
+    {
+      "url": "https://www.kaggle.com/competitions/aith-dl-competition-text-data-2025/overview/",
+      "title": "AITH DL Competition - Text data",
+      "snippet": "",
+      "query": "Kaggle competition new 2025",
+      "tags": [],
+      "matchedIds": [],
+      "firstSeenAt": 1789623106386,
+      "seenCount": 1,
+      "lastSeenAt": 1789623106386
+    },
+    {
+      "url": "https://www.gs.sjtu.edu.cn/post/detail/Z3MzNzQw#1",
+      "title": "通知——第二十三届中国研究生数学建模竞赛",
+      "snippet": "",
+      "publishedAt": "",
+      "query": "中国研究生数学建模竞赛 报名时间 通知",
+      "matchedIds": [
+        "yjs-mcm"
+      ],
+      "firstSeenAt": 1789620559797,
+      "seenCount": 1,
+      "lastSeenAt": 1789620559797
+    },
+    {
+      "url": "https://gs.sjtu.edu.cn/post/detail/Z3MzNzQw#1",
+      "title": "通知——第二十三届中国研究生数学建模竞赛 - 通知——第二十三届中国研究生数学建模竞赛",
+      "snippet": "",
+      "publishedAt": "",
+      "query": "中国研究生数学建模竞赛 报名时间 通知",
+      "matchedIds": [
+        "yjs-mcm"
+      ],
+      "firstSeenAt": 1789620559797,
+      "seenCount": 1,
+      "lastSeenAt": 1789620559797
+    },
+    {
+      "url": "https://yjsy.swfu.edu.cn/info/1361/13536.htm",
+      "title": "关于组织参加2026年下半年中国研究生创新实践系列大赛的通知-西南林业大学研究生院",
+      "snippet": "",
+      "publishedAt": "",
+      "query": "中国研究生数学建模竞赛 报名时间 通知",
+      "matchedIds": [
+        "yjs-series"
+      ],
+      "firstSeenAt": 1789620559797,
+      "seenCount": 1,
+      "lastSeenAt": 1789620559797
+    },
+    {
+      "url": "https://yjs.xhu.edu.cn/b8/54/c874a243796/page.htm",
+      "title": "关于组织参加“华为杯”第二十三届中国研究生数学建模竞赛的通知",
+      "snippet": "",
+      "publishedAt": "",
+      "query": "中国研究生数学建模竞赛 报名时间 通知",
+      "matchedIds": [
+        "yjs-mcm"
+      ],
+      "firstSeenAt": 1789620559797,
+      "seenCount": 1,
+      "lastSeenAt": 1789620559797
+    },
+    {
+      "url": "https://mp.weixin.qq.com/s/Ltt8cpes4tHS83vRzOKosg?",
+      "title": "关于组织研究生报名参加2026年中国研究生人工智能创新大赛的通知",
+      "snippet": "",
+      "publishedAt": "",
+      "query": "中国研究生人工智能创新大赛 报名",
+      "matchedIds": [
+        "yjs-ai"
+      ],
+      "firstSeenAt": 1789620559797,
+      "seenCount": 1,
+      "lastSeenAt": 1789620559797
+    },
+    {
+      "url": "https://cxcyxy.sylu.edu.cn/info/1089/3314.htm",
+      "title": "关于组织参加第八届中国研究生人工智能创新大赛的报名通知",
+      "snippet": "",
+      "publishedAt": "",
+      "query": "中国研究生人工智能创新大赛 报名",
+      "matchedIds": [
+        "yjs-ai"
+      ],
+      "firstSeenAt": 1789620559797,
+      "seenCount": 1,
+      "lastSeenAt": 1789620559797
+    },
+    {
+      "url": "https://gs.xjtu.edu.cn/info/1146/11512.htm",
+      "title": "报名啦｜关于第八届中国研究生人工智能创新大赛开赛的通知-西安交通大学研究生院",
+      "snippet": "",
+      "publishedAt": "",
+      "query": "中国研究生人工智能创新大赛 报名",
+      "matchedIds": [
+        "yjs-ai"
+      ],
+      "firstSeenAt": 1789620559797,
+      "seenCount": 1,
+      "lastSeenAt": 1789620559797
+    },
+    {
+      "url": "https://www.aitop100.cn/infomation/details/34120.html#1#1",
+      "title": "AI大赛：第八届中国研究生人工智能创新大赛",
+      "snippet": "",
+      "publishedAt": "",
+      "query": "中国研究生人工智能创新大赛 报名",
+      "matchedIds": [
+        "yjs-ai"
+      ],
+      "firstSeenAt": 1789620559797,
+      "seenCount": 1,
+      "lastSeenAt": 1789620559797
+    },
+    {
+      "url": "https://grd.bit.edu.cn/pygz/cxpy/tzgg_cxpy/6d2760236f024ff195d6c488718c5fdd.htm#1#1",
+      "title": "【2026研创赛】第八届中国研究生人工智能创新大赛参赛邀请函",
+      "snippet": "",
+      "publishedAt": "",
+      "query": "中国研究生人工智能创新大赛 报名",
+      "matchedIds": [
+        "yjs-ai"
+      ],
+      "firstSeenAt": 1789620559797,
+      "seenCount": 1,
+      "lastSeenAt": 1789620559797
+    },
+    {
+      "url": "https://cxcy.ysu.edu.cn/info/1043/4112.htm#1#1#1",
+      "title": "关于中国国际大学生创新大赛（2026）报名的通知-创新创业教育与指导中心 - 关于中国国际大学生创新大赛（2026）报名的通知",
+      "snippet": "",
+      "publishedAt": "",
+      "query": "中国国际大学生创新大赛 报名通知",
+      "matchedIds": [
+        "ncss"
+      ],
+      "firstSeenAt": 1789620559797,
+      "seenCount": 1,
+      "lastSeenAt": 1789620559797
+    },
+    {
+      "url": "http://m.jyt.henan.gov.cn/2026/08-03/3382016.html#1#1",
+      "title": "教育部关于举办中国国际大学生创新大赛（2026）的通知",
+      "snippet": "",
+      "publishedAt": "",
+      "query": "中国国际大学生创新大赛 报名通知",
+      "matchedIds": [
+        "ncss"
+      ],
+      "firstSeenAt": 1789620559797,
+      "seenCount": 1,
+      "lastSeenAt": 1789620559797
+    },
+    {
+      "url": "http://www.moe.gov.cn/srcsite/A08/s5672/202607/t20260731_1445670.html#1",
+      "title": "教育部关于举办中国国际大学生创新大赛（2026）的通知 - 信息名称： | 教育部关于举办中国国际大学生创新大赛（2026）的通知",
+      "snippet": "",
+      "publishedAt": "",
+      "query": "中国国际大学生创新大赛 报名通知",
+      "matchedIds": [
+        "ncss"
+      ],
+      "firstSeenAt": 1789620559797,
+      "seenCount": 1,
+      "lastSeenAt": 1789620559797
+    },
+    {
+      "url": "https://jyj.guiyang.gov.cn/newsite/xwzx/jyyw/202608/t20260803_90687205.html#1#1",
+      "title": "教育部关于举办中国国际大学生创新大赛（2026）的通知 - 教育部关于举办中国国际大学生创新大赛（2026）的通知",
+      "snippet": "",
+      "publishedAt": "",
+      "query": "中国国际大学生创新大赛 报名通知",
+      "matchedIds": [
+        "ncss"
+      ],
+      "firstSeenAt": 1789620559797,
+      "seenCount": 1,
+      "lastSeenAt": 1789620559797
+    },
+    {
+      "url": "https://hudong.moe.gov.cn/srcsite/A08/s5672/202607/t20260731_1445670.html#1",
+      "title": "教育部关于举办中国国际大学生创新大赛（2026）的通知",
+      "snippet": "",
+      "publishedAt": "",
+      "query": "中国国际大学生创新大赛 报名通知",
+      "matchedIds": [
+        "ncss"
+      ],
+      "firstSeenAt": 1789620559797,
+      "seenCount": 1,
+      "lastSeenAt": 1789620559797
+    },
+    {
+      "url": "https://cuc.fjnu.edu.cn/gqt/2026/0623/c913a44058/page.htm#1#1#1",
+      "title": "【协院团〔2026〕11号】关于举办第七届“挑战杯”大学生课外学术科技作品竞赛的通知",
+      "snippet": "",
+      "publishedAt": "",
+      "query": "挑战杯 课外学术科技作品竞赛 通知",
+      "matchedIds": [
+        "tzb"
+      ],
+      "firstSeenAt": 1789620559797,
+      "seenCount": 1,
+      "lastSeenAt": 1789620559797
+    },
+    {
+      "url": "https://hstc.edu.cn/info/1266/38572.htm",
+      "title": "关于组织开展韩山师范学院2027年“挑战杯”大学生课外学术科技作品竞赛的通知（列韩办通〔2026〕40号）",
+      "snippet": "",
+      "publishedAt": "",
+      "query": "挑战杯 课外学术科技作品竞赛 通知",
+      "matchedIds": [
+        "tzb"
+      ],
+      "firstSeenAt": 1789620559797,
+      "seenCount": 1,
+      "lastSeenAt": 1789620559797
+    },
+    {
+      "url": "https://smkx.sicau.edu.cn/info/1061/28591.htm",
+      "title": "关于开展第二十届“挑战杯”中国大学生课外学术科技作品竞赛院赛及校内重点项目 （第一轮）遴选的通知-四川农业大学-生命科学学院",
+      "snippet": "",
+      "publishedAt": "",
+      "query": "挑战杯 课外学术科技作品竞赛 通知",
+      "matchedIds": [
+        "tzb"
+      ],
+      "firstSeenAt": 1789620559797,
+      "seenCount": 1,
+      "lastSeenAt": 1789620559797
+    },
+    {
+      "url": "https://cgst.sicau.edu.cn/info/1059/14268.htm",
+      "title": "学院关于第二十届“挑战杯”全国大学生课外学术科技作品竞赛院内预选赛及第一轮校内重点项目遴选的通知-草业科技学院",
+      "snippet": "",
+      "publishedAt": "",
+      "query": "挑战杯 课外学术科技作品竞赛 通知",
+      "matchedIds": [
+        "tzb"
+      ],
+      "firstSeenAt": 1789620559797,
+      "seenCount": 1,
+      "lastSeenAt": 1789620559797
+    },
+    {
+      "url": "http://tuanwei.hbu.edu.cn/contents/541/15306.html",
+      "title": "关于组织参加第二十届“挑战杯”课外学术科技作品竞赛“揭榜挂帅”专项赛的通知",
+      "snippet": "",
+      "publishedAt": "",
+      "query": "挑战杯 课外学术科技作品竞赛 通知",
+      "matchedIds": [
+        "tzb"
+      ],
+      "firstSeenAt": 1789620559797,
+      "seenCount": 1,
+      "lastSeenAt": 1789620559797
+    },
+    {
+      "url": "https://softschool.zzu.edu.cn/front/singleArticleDetail?id=4a453ec89eb4b303019eed13bae7005b",
+      "title": "郑州大学网络空间安全学院",
+      "snippet": "",
+      "publishedAt": "",
+      "query": "全国大学生信息安全竞赛 报名",
+      "matchedIds": [],
+      "firstSeenAt": 1789620559797,
+      "seenCount": 1,
+      "lastSeenAt": 1789620559797
+    },
+    {
+      "url": "https://sct.cup.edu.cn/comp/front/comp/info?id=1620",
+      "title": "比赛详情-中国石油大学第二课堂平台",
+      "snippet": "",
+      "publishedAt": "",
+      "query": "全国大学生信息安全竞赛 报名",
+      "matchedIds": [],
+      "firstSeenAt": 1789620559797,
+      "seenCount": 1,
+      "lastSeenAt": 1789620559797
+    },
+    {
+      "url": "https://cst.hitwh.edu.cn/2026/0602/c371a214347/page.htm",
+      "title": "【保研赛事 | 榜单赛事】全国大学生信息安全竞赛举办通知",
+      "snippet": "",
+      "publishedAt": "",
+      "query": "全国大学生信息安全竞赛 报名",
+      "matchedIds": [
+        "ciscn"
+      ],
+      "firstSeenAt": 1789620559797,
+      "seenCount": 1,
+      "lastSeenAt": 1789620559797
+    },
+    {
+      "url": "https://jwc.cugb.edu.cn/c/2026-07-04/853192.shtml",
+      "title": "教务处",
+      "snippet": "",
+      "publishedAt": "",
+      "query": "全国大学生信息安全竞赛 报名",
+      "matchedIds": [],
+      "firstSeenAt": 1789620559797,
+      "seenCount": 1,
+      "lastSeenAt": 1789620559797
+    },
+    {
+      "url": "http://cybersec.xjtu.edu.cn/info/1017/2188.htm",
+      "title": "关于2026年第十九届全国大学生信息安全竞赛（作品赛）暨第三届“长城杯”网数智安全大赛（作品赛）的通知",
+      "snippet": "",
+      "publishedAt": "",
+      "query": "全国大学生信息安全竞赛 报名",
+      "matchedIds": [
+        "ciscn"
+      ],
+      "firstSeenAt": 1789620559797,
+      "seenCount": 1,
+      "lastSeenAt": 1789620559797
+    },
+    {
+      "url": "https://github.com/Xiamen-University-Malaysia/XMUM_ICPC_CCPC/blob/main/Proposal_2026-03-06_CN.pdf?_x_output_type_b6db407c4_=embedded_pdf#2#2",
+      "title": "- https://icpc",
+      "snippet": "",
+      "publishedAt": "",
+      "query": "中国大学生程序设计竞赛 CCPC 网络赛 报名",
+      "matchedIds": [
+        "icpc-wf"
+      ],
+      "firstSeenAt": 1789620559797,
+      "seenCount": 1,
+      "lastSeenAt": 1789620559797
+    },
+    {
+      "url": "http://www.cauc.edu.cn/jsjzh_sys/info/1109/1229.htm",
+      "title": "中国大学生程序设计竞赛（CCPC）",
+      "snippet": "",
+      "publishedAt": "",
+      "query": "中国大学生程序设计竞赛 CCPC 网络赛 报名",
+      "matchedIds": [
+        "ccpc"
+      ],
+      "firstSeenAt": 1789620559797,
+      "seenCount": 1,
+      "lastSeenAt": 1789620559797
+    },
+    {
+      "url": "http://csw.jlu.edu.cn/info/1036/7431.htm",
+      "title": "CCPC-中国大学生程序设计大赛（C类）",
+      "snippet": "",
+      "publishedAt": "",
+      "query": "中国大学生程序设计竞赛 CCPC 网络赛 报名",
+      "matchedIds": [
+        "ccpc"
+      ],
+      "firstSeenAt": 1789620559797,
+      "seenCount": 1,
+      "lastSeenAt": 1789620559797
+    },
+    {
+      "url": "https://ccpc.io/post/267",
+      "title": "关于2022 CCPC全国赛名额分配与报名操作的说明-中国大学生程序设计竞赛",
+      "snippet": "",
+      "publishedAt": "",
+      "query": "中国大学生程序设计竞赛 CCPC 网络赛 报名",
+      "matchedIds": [
+        "ccpc"
+      ],
+      "firstSeenAt": 1789620559797,
+      "seenCount": 1,
+      "lastSeenAt": 1789620559797
+    },
+    {
+      "url": "https://ccpc.io/rules",
+      "title": "China Collegiate Programming Contest",
+      "snippet": "",
+      "publishedAt": "",
+      "query": "中国大学生程序设计竞赛 CCPC 网络赛 报名",
+      "matchedIds": [],
+      "firstSeenAt": 1789620559797,
+      "seenCount": 1,
+      "lastSeenAt": 1789620559797
+    },
+    {
+      "url": "https://dasai.lanqiao.cn/pages/v7/dasai/competition/individual_competition.html&wd=&eqid=f03edc24000bc58b0000000264b7fb2e",
+      "title": "蓝桥杯大赛 — 全国大学生TMT行业赛事",
+      "snippet": "",
+      "publishedAt": "",
+      "query": "蓝桥杯 研究生组 报名时间",
+      "matchedIds": [
+        "lanqiao"
+      ],
+      "firstSeenAt": 1789620559797,
+      "seenCount": 1,
+      "lastSeenAt": 1789620559797
+    },
+    {
+      "url": "http://jsjkxygcxy.sanxiau.edu.cn/system/_content/download.jsp?urltype=news.DownloadAttachUrl&owner=2132652140&wbfileid=14781236#1#1",
+      "title": "关于2025-2026年度第十七届蓝桥杯全国大学生软件和信息技术大赛的报名通知",
+      "snippet": "",
+      "publishedAt": "",
+      "query": "蓝桥杯 研究生组 报名时间",
+      "matchedIds": [
+        "lanqiao"
+      ],
+      "firstSeenAt": 1789620559797,
+      "seenCount": 1,
+      "lastSeenAt": 1789620559797
+    },
+    {
+      "url": "https://cxcy.wust.edu.cn/info/1482/11862.htm",
+      "title": "关于“第十七届蓝桥杯全国软件和信息技术专业人才大赛”（软件赛、电子赛）的报名通知-创新创业学院",
+      "snippet": "",
+      "publishedAt": "",
+      "query": "蓝桥杯 研究生组 报名时间",
+      "matchedIds": [
+        "lanqiao"
+      ],
+      "firstSeenAt": 1789620559797,
+      "seenCount": 1,
+      "lastSeenAt": 1789620559797
+    },
+    {
+      "url": "https://www.scuec.edu.cn/jky/info/1143/5663.htm",
+      "title": "关于组织参加2026年第十七届蓝桥杯全国大学生软件和信息技术大赛的通知-中南民族大学计算机学院（人工智能学院）",
+      "snippet": "",
+      "publishedAt": "",
+      "query": "蓝桥杯 研究生组 报名时间",
+      "matchedIds": [
+        "lanqiao"
+      ],
+      "firstSeenAt": 1789620559797,
+      "seenCount": 1,
+      "lastSeenAt": 1789620559797
+    },
+    {
+      "url": "https://maths.hfut.edu.cn/info/1047/7268.htm",
+      "title": "关于2026年蓝桥杯全国大学生软件和信息技术大赛安徽省赛报名工作的通知",
+      "snippet": "",
+      "publishedAt": "",
+      "query": "蓝桥杯 研究生组 报名时间",
+      "matchedIds": [
+        "lanqiao"
+      ],
+      "firstSeenAt": 1789620559797,
+      "seenCount": 1,
+      "lastSeenAt": 1789620559797
+    },
+    {
+      "url": "https://www.163.com/dy/article/KO5L3M220514CDBK.html?spss=adap_pc&referFrom=",
+      "title": "2026华为软件精英挑战赛启动报名",
+      "snippet": "",
+      "publishedAt": "",
+      "query": "华为软件精英挑战赛 报名",
+      "matchedIds": [
+        "hw-software"
+      ],
+      "firstSeenAt": 1789620559797,
+      "seenCount": 1,
+      "lastSeenAt": 1789620559797
+    },
+    {
+      "url": "https://baike.baidu.com/item/2026%E5%8D%8E%E4%B8%BA%E8%BD%AF%E4%BB%B6%E7%B2%BE%E8%8B%B1%E6%8C%91%E6%88%98%E8%B5%9B/67516941#1",
+      "title": "2026华为软件精英挑战赛 - 华为公司主办的全球软件编程竞赛",
+      "snippet": "",
+      "publishedAt": "",
+      "query": "华为软件精英挑战赛 报名",
+      "matchedIds": [
+        "hw-software"
+      ],
+      "firstSeenAt": 1789620559797,
+      "seenCount": 1,
+      "lastSeenAt": 1789620559797
+    },
+    {
+      "url": "https://finance.sina.com.cn/jjxw/2026-03-16/doc-inhrequn5939512.shtml?cref=cj#1",
+      "title": "2026华为软件精英挑战赛启动报名 - 经济新闻滚动 > 正文",
+      "snippet": "",
+      "publishedAt": "",
+      "query": "华为软件精英挑战赛 报名",
+      "matchedIds": [
+        "hw-software"
+      ],
+      "firstSeenAt": 1789620559797,
+      "seenCount": 1,
+      "lastSeenAt": 1789620559797
+    },
+    {
+      "url": "https://bbs.huaweicloud.com/blogs/477201",
+      "title": "华为持续加码AI编程，软挑赛首次引入华为云码道",
+      "snippet": "",
+      "publishedAt": "",
+      "query": "华为软件精英挑战赛 报名",
+      "matchedIds": [],
+      "firstSeenAt": 1789620559797,
+      "seenCount": 1,
+      "lastSeenAt": 1789620559797
+    },
+    {
+      "url": "https://m.toutiao.com/article/7617787035197243947/?upstream_biz=toutiao_pc#1",
+      "title": "2026华为软件精英挑战赛启动报名 - 今日头条 - 打开APP",
+      "snippet": "",
+      "publishedAt": "",
+      "query": "华为软件精英挑战赛 报名",
+      "matchedIds": [
+        "hw-software"
+      ],
+      "firstSeenAt": 1789620559797,
+      "seenCount": 1,
+      "lastSeenAt": 1789620559797
+    },
+    {
+      "url": "https://tianchi.aliyun.com/competition/entrance/532487/introduction",
+      "title": "算法大赛-天池大赛-阿里云的赛制",
+      "snippet": "",
+      "publishedAt": "",
+      "query": "天池 算法大赛 新赛季 报名",
+      "matchedIds": [
+        "tianchi"
+      ],
+      "firstSeenAt": 1789620559797,
+      "seenCount": 1,
+      "lastSeenAt": 1789620559797
+    },
+    {
+      "url": "https://cn.aliyun.com/page-source/tianchi/university/competition_rules?from_alibabacloud=",
+      "title": "阿里云天池大学生竞赛章程",
+      "snippet": "",
+      "publishedAt": "",
+      "query": "天池 算法大赛 新赛季 报名",
+      "matchedIds": [
+        "tianchi"
+      ],
+      "firstSeenAt": 1789620559797,
+      "seenCount": 1,
+      "lastSeenAt": 1789620559797
+    },
+    {
+      "url": "https://baike.baidu.com/item/2026%E8%85%BE%E8%AE%AF%E5%B9%BF%E5%91%8A%E7%AE%97%E6%B3%95%E5%A4%A7%E8%B5%9B/67500599#1",
+      "title": "2026腾讯广告算法大赛 - 由腾讯广告、国际顶级会议KDD联合举办的赛事",
+      "snippet": "",
+      "publishedAt": "",
+      "query": "腾讯广告算法大赛 报名",
+      "matchedIds": [
+        "tencent-ad"
+      ],
+      "firstSeenAt": 1789620559797,
+      "seenCount": 1,
+      "lastSeenAt": 1789620559797
+    },
+    {
+      "url": "http://www.c114.net.cn/ainews/68160.html",
+      "title": "2026腾讯广告算法大赛官宣启动",
+      "snippet": "",
+      "publishedAt": "",
+      "query": "腾讯广告算法大赛 报名",
+      "matchedIds": [
+        "tencent-ad"
+      ],
+      "firstSeenAt": 1789620559797,
+      "seenCount": 1,
+      "lastSeenAt": 1789620559797
+    },
+    {
+      "url": "https://www.jinguxun.com/article/7687340",
+      "title": "这一次腾讯算法大赛，Next Level了",
+      "snippet": "",
+      "publishedAt": "",
+      "query": "腾讯广告算法大赛 报名",
+      "matchedIds": [],
+      "firstSeenAt": 1789620559797,
+      "seenCount": 1,
+      "lastSeenAt": 1789620559797
+    },
+    {
+      "url": "https://cloud.tencent.cn/developer/article/2532622#1",
+      "title": "冠军队独享200万，进决赛就有直通offer，腾讯广告算法大赛报名开启 - 机器之心",
+      "snippet": "",
+      "publishedAt": "",
+      "query": "腾讯广告算法大赛 报名",
+      "matchedIds": [
+        "tencent-ad"
+      ],
+      "firstSeenAt": 1789620559797,
+      "seenCount": 1,
+      "lastSeenAt": 1789620559797
+    },
+    {
+      "url": "https://www.tencent.com/index.php/zh-cn/articles/2202134.html",
+      "title": "腾讯举办中国首个全模态生成式推荐算法大赛，吸引全球超6000名学生参加",
+      "snippet": "",
+      "publishedAt": "",
+      "query": "腾讯广告算法大赛 报名",
+      "matchedIds": [],
+      "firstSeenAt": 1789620559797,
+      "seenCount": 1,
+      "lastSeenAt": 1789620559797
+    },
+    {
+      "url": "https://github.com/Galaxy-Dawn/claude-scholar/blob/main/skills/kaggle-learner/references/knowledge/nlp/aimo-2-2025.md#1",
+      "title": "claude-scholar/skills/kaggle-learner/references/knowledge/nlp/aimo-2-2025.md at main · Galaxy-Dawn/claude-scholar - Skip to content",
+      "snippet": "",
+      "publishedAt": "",
+      "query": "Kaggle competition 2025 new",
+      "matchedIds": [
+        "kaggle"
+      ],
+      "firstSeenAt": 1789620559797,
+      "seenCount": 1,
+      "lastSeenAt": 1789620559797
+    },
+    {
+      "url": "https://www.kaggle.com/competitions/data-science-osaka-autumn-2025/overview/description",
+      "title": "Data Science Osaka Autumn 2025",
+      "snippet": "",
+      "publishedAt": "",
+      "query": "Kaggle competition 2025 new",
+      "matchedIds": [],
+      "firstSeenAt": 1789620559797,
+      "seenCount": 1,
+      "lastSeenAt": 1789620559797
+    },
+    {
+      "url": "https://www.kaggle.com/competitions/voai-2025-hsgs-nlp/overview/citation",
+      "title": "VOAI2025 - HSGS - NLP",
+      "snippet": "",
+      "publishedAt": "",
+      "query": "Kaggle competition 2025 new",
+      "matchedIds": [],
+      "firstSeenAt": 1789620559797,
+      "seenCount": 1,
+      "lastSeenAt": 1789620559797
+    },
+    {
+      "url": "https://neurips.cc/Conferences/2026/CallForCompetitions",
+      "title": "NeurIPS 2026 Call for Competitions",
+      "snippet": "",
+      "publishedAt": "",
+      "query": "NeurIPS competition track call for proposals",
+      "matchedIds": [
+        "neurips-comp"
+      ],
+      "firstSeenAt": 1789620559797,
+      "seenCount": 1,
+      "lastSeenAt": 1789620559797
+    },
+    {
+      "url": "https://neurips.cc/Conferences/2026/CallForCreativeAI",
+      "title": "Call For Creative AI 2026",
+      "snippet": "",
+      "publishedAt": "",
+      "query": "NeurIPS competition track call for proposals",
+      "matchedIds": [],
+      "firstSeenAt": 1789620559797,
+      "seenCount": 1,
+      "lastSeenAt": 1789620559797
+    },
+    {
+      "url": "https://neurips.cc/Conferences/2026/CallForPapers",
+      "title": "Call For Papers 2026",
+      "snippet": "",
+      "publishedAt": "",
+      "query": "NeurIPS competition track call for proposals",
+      "matchedIds": [],
+      "firstSeenAt": 1789620559797,
+      "seenCount": 1,
+      "lastSeenAt": 1789620559797
+    },
+    {
+      "url": "https://phemex.com/news/article/neurips-2026-seeks-proposals-for-llm-evaluation-and-social-impact-competitions-74099",
+      "title": "NeurIPS 2026 Calls for LLM Evaluation and Social Impact Prop | Phemex News",
+      "snippet": "",
+      "publishedAt": "",
+      "query": "NeurIPS competition track call for proposals",
+      "matchedIds": [
+        "neurips-comp"
+      ],
+      "firstSeenAt": 1789620559797,
+      "seenCount": 1,
+      "lastSeenAt": 1789620559797
+    },
+    {
+      "url": "https://news.superex.com/flash/46541.html",
+      "title": "NeurIPS 2026 Seeks Proposals for LLM Evaluation and Social Impact Competitions",
+      "snippet": "",
+      "publishedAt": "",
+      "query": "NeurIPS competition track call for proposals",
+      "matchedIds": [
+        "neurips-comp"
+      ],
+      "firstSeenAt": 1789620559797,
+      "seenCount": 1,
+      "lastSeenAt": 1789620559797
+    }
+  ],
+  "sync": {
+    "runs": 2,
+    "lastRunAt": 1789623106386,
+    "lastOkAt": 1789623106386,
+    "lastTrigger": "startup",
+    "lastError": "",
+    "queryOk": 20,
+    "queryFail": 0,
+    "newLeads": 65,
+    "hits": 12,
+    "filtered": 9,
+    "history": [
+      {
+        "at": 1789623106386,
+        "trigger": "startup",
+        "queryOk": 20,
+        "queryFail": 0,
+        "collected": 76,
+        "newLeads": 65,
+        "hits": 12,
+        "filtered": 9,
+        "errors": []
+      },
+      {
+        "at": 1789620559797,
+        "trigger": "startup",
+        "queryOk": 14,
+        "queryFail": 0,
+        "collected": 66,
+        "newLeads": 66,
+        "hits": 15,
+        "errors": []
+      }
+    ]
+  }
+}

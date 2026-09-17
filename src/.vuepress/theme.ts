@@ -18,6 +18,12 @@ export default hopeTheme(
 
     docsDir: 'src',
 
+    markdown: {
+      math: {
+        type: 'katex',
+      },
+    },
+
     blog: {
       medias: {
         // Baidu: "https://example.com",
@@ -148,13 +154,6 @@ export default hopeTheme(
       //   figure: true,
       //   lazyload: true,
       //   size: true
-      // },
-
-      // markdownMath: {
-      //   // install katex before enabling it
-      //   type: "katex",
-      //   // or install mathjax-full before enabling it
-      //   type: "mathjax",
       // },
 
       // This features is enabled for demo, only preserve if you need it
