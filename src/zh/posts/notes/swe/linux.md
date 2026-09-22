@@ -1,3472 +1,1162 @@
 ---
 lang: zh-CH
-title: Linux学习笔记
-description: Linux课程笔记，指令、工程、操作系统
+title: Linux 使用与排障笔记
+description: 以"现象 → 定位 → 验证"为主线，整理 Linux 常用命令组合、重定向与管道、权限、进程/端口/磁盘排查、远程工作、软件包与 systemd
 date: 2023-04-09
 category:
   - 后端开发
 tag:
   - 命令
+  - Linux
+  - 排障
 ---
 
-## 一、从基础命令到实战命令
+> 全文主线只有一句：**遇到现象时，能用最短的命令路径定位到原因，并验证它确实被解决**。
+> 因此这里收的是可复用的命令组合、必要的最小机制（重定向、权限位、fd、inode）和实际踩过的坑，而不是每个命令的完整参数表——完整的 `--help` 属于 man page，不属于这篇笔记。
+> 每一节的写法尽量对齐"现象 → 判断依据 → 命令 → 验证"，可复用的形态优先。
 
+---
 
+## 一、文件与文本处理
 
-### 路径查看 dir ls find which pwd tree
+### 定位文件：`ls` 与 `find` 的常用组合
 
-
+`ls -l` 的每一列都有用途，看懂一次就不用再查：
 
 ```Bash
-ls -l a.txt b.c #列出a, b的详细信息  
+$ ls -l a.txt b.c
+-rw-rw-r-- 1 USER2022102157 USER2022102157  4096 Mar 16 16:52 a.txt
 drwxrwxr-x 3 USER2022102157 USER2022102157  4096 Mar 16 16:52 test-dir
-目录可读可写可执行（所有者，同组用户，其他用户） 链接数（其中一个是目录本身）所有者 所属组 日期 
-ls //列出当前目录下的所有文件
-ls -R #递归列出整个目录里的
 ```
 
-
-
-[Linux中find命令用法全汇总，看完就没有不会用的！\-腾讯云开发者社区\-腾讯云 \(](https://cloud.tencent.com/developer/article/1348438)[tencent\.com](https://cloud.tencent.com/developer/article/1348438)[\)](https://cloud.tencent.com/developer/article/1348438)
-
-
+字段依次是：**文件类型 + 权限位**、链接数、所有者、所属组、大小、修改时间、名称。目录的链接数等于 `2 + 子目录数`（`.` 和 `..` 各占一个），这也是"为什么新建子目录会让父目录链接数变化"的原因。
 
 ```Bash
-一定要加-name -empty -size
-find -iname "MyCProgram.c"
-# 使用了 -iname 选项，该选项表示不区分大小写查找，因此可以找到
-sudo  find / -name passwd
-# 使用 sudo 提升权限，在整个文件系统中查找名为 passwd 的文件
-sudo find  / -maxdepth 2 -name passwd
-# 限制了搜索深度为 2，只在根目录下的直接子目录中查找名为 passwd 的文件
-sudo find  / -maxdepth 3 -name passwd
-sudo find  /  -mindepth 3 -maxdepth 5 -name passwd
-# 搜索深度为 3到 5
-find  -empty
-# 查找当前目录及其子目录中的空文件和空目录
-find . -maxdepth 1 -empty -not -name ".*"
-# 查找当前目录下的空文件和空目录，但排除了以 . 开头的隐藏文件和目录
-find . -type f -exec ls -s {} \; | sort -n -r | head -2
-# 查找当前目录及其子目录中的所有文件，并按文件大小排序，列出最大的两个文件
-find . -type f -exec ls -s {} \; | sort -n  | head -2
-# 没有使用 -r 选项，因此列出的是最小的两个文件
-find . -type d
-# 查找当前目录及其子目录中的所有目录
-
-which用于找command的绝对路径
+ls -a            # 显示隐藏文件（. 开头）
+ls -lh           # 人类可读大小
+ls -lt           # 按修改时间倒序，找最新改动的文件
+ls -lS           # 按大小倒序，找谁占了空间
+ls -l --time-style=full-iso   # 拿到完整时间，排查"时间戳对不上"
 ```
 
-
-
-### 操作文件 cd rm cp dd mkdir rmdir
-
-
+`find` 的坑集中在两处：**先限定范围，再写条件**；**删除前先打印**。
 
 ```Bash
-cd ./
-cd ../
-cd cd ~
+# 限定范围：不要一上来就 find /，全盘扫描又慢又容易误伤
+find . -maxdepth 2 -name '*.log'
 
-注意：cp mv会识别文件还是文件夹来看是路径名还是重命名
-cp *.* ./test-dir //当前目录所有文件复制到./test-dir
-cp -v
+# 按大小、时间、类型、空文件筛选
+find . -type f -size +100M            # 默认单位是 512B 块，+100M 才是 100MiB 以上
+find . -type f -mtime -1              # 最近 1 天内修改过
+find . -type d -empty                 # 空目录
+find . -empty -not -name '.*'         # 空文件/空目录，排除隐藏项
 
-复制文件并对原文件的内容进行转换和格式化处理
-dd
+# 找到后要"看"就 -exec 直接执行，要"交给别的命令"才用 xargs
+find . -type f -name '*.log' -exec ls -lh {} +
+find . -type f -name '*.log' -print0 | xargs -0 rm -f
 
-mv file3 file4 //重命名
-mv dir10 dir11 
-mv /home/file3 /tmp/file5 //移动
-mv dir10 /tmp 
-
-rm -f    强制删除文件或目录
-rm *fi
-rm -r    递归处理，将指定目录下的所有文件与子目录一并处理；
-
-mkdir -p
+# 排序取 Top N：先给 find 的输出带上大小，再排
+find . -type f -exec ls -s {} + | sort -nr | head -5
 ```
 
+两个必须记住的边界：
 
+- `-exec ... \;` 会为每个文件启动一次进程，`-exec ... +` 会把结果批量拼成一条命令，文件多时差距很大。
+- 文件名里可能有空格或换行，管道交给 `xargs` 时必须用 `-print0 | xargs -0`，否则会被按空白拆开而误删误改。
 
-#### 如何删除下载的软件？
-
-
-
-下载的软件一般分为包管理器下载和源码下载两种方法，我们可以通过`Which`来判断，如果输出的是 `/usr/local/...` 说明是源码编译安装，如果是 `/usr/bin/                        ...` 、 `/usr/lib64/...` 可能是通过包管理器安装的。
-
-
-
-##### 卸载源码安装的软件
-
-
-
-先找到安装路径，使用管理员权限递归强制删除，并检查 `/usr/lib/` 是否有软链接
-
-
+判断一个命令究竟来自哪里、是不是别名：
 
 ```Bash
-# 示例
-sudo rm -rf /usr/lib/xxx
-sudo rm -rf /usr/local/xxx
-sudo rm -rf /usr/bin/xxx
-sudo rm -rf /usr/lib64/xxx*
-sudo rm -rf /etc/xxx
-sudo rm -rf /var/lib/xxx
+$ which python3
+/usr/bin/python3
+$ type -a ls         # 同时列出别名、函数、可执行文件
+$ readlink -f $(which python3)   # 顺着软链接找到真实文件
 ```
 
+`/usr/bin` 通常属于包管理器，`/usr/local/bin` 通常是源码编译或手工安装，`~/.local/bin`、`~/miniconda3/bin` 属于用户级安装。这条判断在"卸载软件"和"PATH 为什么指向了旧版本"两个场景里都会用到。
 
-
-记得在环境变量 `~/.bashrc` 和 `~/.bash_profile` 中查找是否有相关路径，删除后刷新一下`source ~/.bashrc`
-
-
-
-最后使用 `which` 来确认是否删除，也可以用软件指令来检查
-
-
-
-##### 包管理器卸载
-
-
-
-非常简单，使用 `sudo yum remove xxx` 即可
-
-
-
-
-
-
-
-### 查看文本 cat less more wc tail head
-
-
-
-cat \(catenate\)创建、打开、连接文件
-
-
-
-#### cat常用命令
-
-less 允许用户逐页浏览文件内容，而不是一次性加载整个文件到内存中。适合用于查看大型文件。
-
-
+### 查看文件：`cat`、`less` 与 `tail`
 
 ```Bash
-cat hello.c //输出hello.c的内容到终端
-less document
-cat hello.txt | less
+cat -n file                 # 带行号输出，配合 grep 定位行
+cat a.txt b.txt > c.txt     # 拼接，注意会覆盖 c.txt
+
+less +F app.log             # 以跟踪模式打开，等价 tail -f；Ctrl+C 回到浏览模式
+less file                  # g/G 首尾，/ 搜索，n 下一个
+
+tail -n 100 app.log         # 最后 100 行
+tail -f app.log             # 跟踪新增内容
+tail -F app.log             # 跟踪文件名而非 fd，日志轮转（logrotate）后仍能跟上
 ```
 
+`tail -f` 与 `tail -F` 的区别是排障高频考点：`-f` 跟踪的是已经打开的 fd，日志被轮转（重命名+新建）后会继续盯着旧文件，看起来"日志不动了"；`-F` 会在文件被替换后重新打开。
 
-
-`wc`统计文件的字节数、字数、行数
-
-
-
-```Bash
-wc [options] 
--c 显示字节数
--m 显示字符数
--l 显示行数
--w 显示字数
--L 打印最长行的长度
-```
-
-
+大文件不要用 `cat` 直接刷屏——几 GB 的文件会拖垮终端。用 `less`、`head`、`tail`，或按行数统计：
 
 ```Bash
-tail -n 5 .profile # 输出profile 文件的最后5行内容
+wc -l app.log               # 行数
+wc -c app.log               # 字节数
 ```
 
+### 检索与加工：`grep`、`sed`、`awk` 的最小可用集
 
-
-### 传输文本 echo
-
-
-
-```Bash
-echo $$                 # 返回正在执行进程的返回状态
-echo $?                 # 打印上一个命令的退出状态码，如果命令执行成功则返回0，否则返回其他值。
-echo $LOGNAME        # 当前登录用户
-
-echo  “hello , test file “  >  test.txt //打印到test。
-
-b=1
-```
-
-
-
-### 编辑文本 vi vim nano
-
-
+**grep 只接受文件或流，不接受"一行文本"**，所以要匹配一个字符串要么给它文件，要么用管道喂进去：
 
 ```Bash
-
+grep -rn 'Connection refused' ./logs        # 递归 + 行号
+grep -i 'timeout' app.log                   # 忽略大小写
+grep -C 3 -A 2 'Exception' app.log          # 前后各 N 行上下文
+grep -w 'root' /etc/passwd                  # 整词匹配，避免 rootfs 之类误命中
+grep -v 'health' access.log                 # 反向过滤
+grep -q 'ready' status.txt && echo up       # 静默模式，只用退出码
+echo 'hello' | grep -o 'ell'                # -o 只输出匹配部分
 ```
-
-
-
-### \. 进制 xxd od
-
-
 
 ```Bash
-xxd 十六进制
-od  二进制
+# 扫代码目录时排除体积大又无关的目录，否则会卡很久并混入噪声
+grep -rn --include='*.java' --exclude-dir={.git,node_modules,target} 'TODO' .
 ```
 
-
-
-### 设置变量 env export declare set source
-
-
-
-有时希望将部分变量设置为shell会话的环境变量，好在多个程序或会话中共享使用。
-
-
-
-全局环境变量通常在 `/etc/profile` 、 `/etc/environment` 或 `/etc/profile.d/` 下的脚本中定义。
-
-
-
-局部环境变量包括shell进程的和用户个人的 `~./bashrc` 和 `~/.bash_profile` \.
-
-
-
----
-
-
-
-`env` 用于查看所有环境变量，包括全局和当前可见的。
-
-
-
-使用： `env | grep goo`  ，打印某个变量可以用`printenv PATH` 或者 `echo $PATH`
-
-
-
-`export` 可为shell变量或函数设置导出属性，即设置为环境变量。
-
-
-
-使用： 
+**sed 用于按行替换和删除**，日常只会用到几种形态：
 
 ```Bash
-# 创建/修改并导出
-export a b=3
-# 删除导出属性
-export -n a b
-# 函数
-function func_1(){ echo '123'; }
-export -f func_1
-export -fn func_1
+sed 's/old/new/g' file            # 输出到终端，不改文件
+sed -i 's/old/new/g' file         # 就地修改（GNU）；macOS 需要写成 sed -i '' ...
+sed -i.bak 's/old/new/g' file     # 改之前留个 .bak，手滑时的保险
+sed -n '10,20p' file              # 只看第 10~20 行
+sed '/^#/d' conf                  # 删除注释行
+sed -i '/^$/d' conf               # 删除空行
+sed -E 's/([0-9]+)ms/\1 milliseconds/' file    # -E 才支持无转义分组
+sed 's#/usr/local#/opt#g' file    # 内容里有 / 时换分隔符，比反斜杠转义干净
 ```
 
-
-
-`declare` 声明变量，默认导出为当前shell进程且不影响子进程，`local` 用法一样但是在函数内部用，等于b=3
+**awk 的价值是"按列处理"**，它的模型是：按记录分隔符（默认行）读入，按字段分隔符（默认空白）切列，`$1`、`$2`…`$NF` 取列。
 
 ```Bash
-# 创建整型变量
-declare -i b=5
-# 显示属性，返回 declare -i b="5"。
-declare -p b
-# + 表示删除
-decalre +i b
-# -a 表示数组，但不能使用+a删除
-declare -ar season=('Spring','Summer','Fall','Winter')
-# 设置导出变量
-declare -x b
-# -l -u 强制转换值的英文大小写
-# -r 表示只读属性 
+awk '{print $1, $NF}' access.log              # 第一列和最后一列
+awk -F: '{print $1}' /etc/passwd              # 指定冒号分隔
+awk -F, '$3 > 100 {print $1}' data.csv        # 条件过滤
+awk '{sum += $3} END {print sum}' data.txt    # 求和
+awk -F: '{printf "%-20s %s\n", $1, $3}' /etc/passwd   # 指定分隔符并对齐输出
 ```
 
+`FS`（输入分隔符）、`OFS`（输出分隔符）、`NR`（行号）、`NF`（字段数）是最常用的四个内置变量。
 
-
-`set`显示系统中已经存在的shell变量，以及设置shell变量的新变量值。
-
-使用set更改shell特性时，符号"\+"和"\-"的作用分别是打开和关闭指定的模式。
-
-set命令不能够定义新的shell变量。如果要定义新的变量，可以使用declare命令以`变量名=值`的格式进行定义即可。
+### 排序、去重与统计：`sort` 与 `uniq`
 
 ```Bash
--a：标示已修改的变量，以供输出至环境变量。
-set -a mylove                 #设置为环境变量
+sort file                                        # 字典序
+sort -u file                                     # 排序并去重
+sort -nk 2 -t: file                              # 按第 2 列数字排序，分隔符是冒号
+sort -nrk 3 -t: file                             # 第 3 列数字倒序
+sort -h                                          # 带单位的大小排序（2K < 1G）
+sort file | uniq -c | sort -nr | head -10        # Top 10
 ```
 
+`uniq` **只对相邻的重复行生效**，所以它前面几乎总是跟着 `sort`——不排序直接用 `uniq` 是典型误用。
 
-
-```Bash
-#export初始化定义
-export variable=“Hello World”
-
-
-variable=“Hello” #后续可修改
-
-#set用于查询所有变量
-set #显示所有shell变量和函数
-set - #清空所有
-set VAR=value #设置一个名为 VAR 的环境变量，其值为 value
-set | grep foo # 显示当前 shell 包含“foo”的所有变量和参
-```
-
-
-
-#### 如何配置环境变量？
-
-临时设置，使用export语句
-
-```Python
-export PYTHONPATH="/home/jacob/Project/AGI/14_L2RAG"
-```
-
-如果是永久设置，在每次打开终端时都生效，比如安装程序语言等需要将 `bin` 设置到环境变量中，也就是系统的 PATH 路径中，需要将export命令添加到shell的启动文件`~/.bashrc`或`~/.bash_profile`。可以vim打开编辑，也可以使用重定向输出追加模式。
+一条真正会反复用到的组合：统计日志里访问量最高的 IP。
 
 ```Bash
-echo 'export PATH=/usr/lib/lib/erlang/bin:$PATH' >> ~/.bashrc
-source ~/.bashrc
+awk '{print $1}' access.log | sort | uniq -c | sort -nr | head -20
 ```
 
-
-
-
-
-
-
-`source`
-
-
+`tr` 只做字符级替换/删除，够用的就两三种：
 
 ```Bash
-source ~/.bashrc
+echo 'hello 123 world 456' | tr -d '0-9'   # 删除数字
+cat text | tr '\t' ' '                     # 制表符转空格
+tr a-z A-Z < file                          # 转大写
 ```
 
+### 链接与打包：`ln` 与 `tar`
 
+硬链接与软链接的本质区别在于**指向的是 inode 还是路径**：
 
-### 查看Linux信息 hostnamectl
-
-`hostnamectl`可以用来查看Linux的发行版本信息
-
-`cat /proc/version`
-
-### 下载文件与网络通信 wget curl
-
-> 关于下载软件或库，必须先参阅官方文档确定正确适配的版本方可下载
-> 
-> 
-
-
-
-`wget`是一个非交互式的网络下载工具，用于下载单个文件，支持 HTTP、HTTPS 和 FTP 协议。
+| | 硬链接 | 软链接（符号链接） |
+|---|---|---|
+| 本质 | 新增一个目录项指向同一 inode | 一个文件，内容是目标路径 |
+| 跨文件系统 | 不可以 | 可以 |
+| 指向目录 | 不允许 | 允许 |
+| 目标不存在 | 不可能（本身就是同一文件） | 可以悬空，访问才报错 |
+| 删除原文件 | 数据仍在，其他名字照常访问 | 链接失效 |
 
 ```Bash
-wget https://dev.mysql.com/downloads/file/?id=542360
-# -O <filename>：指定保存的文件名。如果你不指定，wget 会以 URL 中的文件名保存。
-# -c：断点续传。当下载中断时，下次可以从上次中断的地方继续下载，非常实用。
-# -r：递归下载。用于下载整个网站或目录。
-# -b：后台下载。将下载任务放到后台运行，然后退出终端。
-# -t <number>：设置重试次数。-t 0 表示无限重试。
-# --no-check-certificate：不检查 HTTPS 证书。如果遇到 SSL/TLS 证书错误，可以使用这个选项。
+ln abc.txt hard.txt          # 硬链接：ln 默认就是硬链接
+ln -s /opt/app/current/conf.yml conf.yml   # 软链接，生产里常见的"切换版本"手法
+ls -li                       # -i 显示 inode，才能看出两个名字是不是同一份数据
 ```
 
-`curl`侧重于通信，用于在服务器和客户端之间进行数据传输。它支持多种协议，包括 HTTP、HTTPS、FTP、FTPS、SCP、SFTP、LDAP、IMAP、POP3、SMTP、SMTPS 等。
-
-1. 下载文件
+`tar` 的四个字母里，`-f` 永远是最后一个接文件名，其余是模式：
 
 ```Bash
-curl 
--A 代理头
--b
--I 发出head请求，打印服务器HTTP标头
--L 跟随服务器重定向
--o <filename> 或 --output <filename>
--s 不输出错误和进度信息    
--v 显示传输的详细信息，包括请求头、响应头、连接状态等。这对于调试网络问题非常有帮助。
+tar -czvf pkg.tar.gz dir/                 # 打包并 gzip 压缩
+tar -xzvf pkg.tar.gz -C /opt              # 解包到指定目录
+tar -tzvf pkg.tar.gz                      # 只列内容，不解包（确认再解开）
+tar -czvf pkg.tar.gz --exclude='.git' --exclude='node_modules' dir/
+tar -xjf pkg.tar.bz2                      # bz2 用 -j
 ```
 
-2. 模拟http请求，进行网络调试，保存cookies
+三个容易踩的点：
 
-3. 
+- `--exclude` 要写在文件列表之前，写在后面不生效。
+- 归档里带绝对路径时，GNU tar 解包会去掉开头的 `/`，不要指望它还原到原位。
+- 用 `-C` 指定目录时，`-C` 之后的相对路径都以新目录为基准，顺序不同结果不同。
 
-### 传输文件 ssh scp
-
-
-
-ssh 
-
-
-
-要从本地连接远程服务器，先在本机使用 `ssh-keygen` 生成专门的公钥私钥对，再将公钥复制到服务器。
-
-
+`zip`/`unzip` 场景不同，`-v` 只列目录内容不解压：
 
 ```Bash
-ssh-keygen -t rsa -b 4096 -C "your_email@example.com" -f ~/.ssh/自定义密钥名称
-# windows例子
-ssh-keygen -t rsa -b 4096 -C "dujiakang@szvt.com" -f .ssh/zdlt_test
-
-# 使用ssh将公钥复制到linux
-ssh-copy-id username@your-linux-server-ip
-ssh-copy-id -i .ssh\id_rsa.pub username@your-server-ip
+unzip -l pkg.zip              # 先看内容
+unzip pkg.zip -d /tmp/target  # 解压到指定目录
+zip -r pkg.zip dir/           # 压缩目录
 ```
 
-
-
-scp向ssh服务器发送文件
-
-
-
-```Bash
-# 从服务器下载
-scp username@servername:/path/filename /var/www/local_dir
-# 从服务器下载整个目录
-scp -r username@servername:/var/www/remote_dir/ /var/www/local_dir
-# 上传本地文件到服务器
-scp /path/filename username@servername:/path 
-# 上传本地目录        
-scp  -r local_dir username@servername:remote_dir
-```
-
-
-
-### 包管理器 rpm tar make
-
-`rpm` 包：红帽子包管理器\(Redhat Package Manager\)是一个底层的软件包管理工具。它负责安装、卸载、查询和验证单个 RPM 文件。RPM把 Linux 组织成不到两千个包，类似windows的\.exe。
-
-`srpm` 包：未编译过的 rpm 包，需要以 rpm 管理的方式编译，然后以 rpm 的安装方式安装。
-
-`GPG-KEY` \(GNU Privacy Guard\)：一种公钥加密技术，用于验证软件包的完整性和来源。软件包的维护者会使用他们的私钥对软件包进行签名。在安装时，`yum` 会使用维护者发布的公钥来验证这个签名。如果验证成功，说明软件包在下载过程中没有被篡改，且确实来自可信的源。
-
-```Bash
-# -q 对已安装的包进行简单查询
-rpm -q packagename（包的名称）
-rpm -qi packagename 对已安装的包进行详细信息查询
-rpm -ql packagename 查询已安装包中包含的文件
-rpm -qa 显示已经安装的所有 rpm 包
-rpm -qa | grep linux 显示已经安装的所有包含 linux 字段的
-
-# -f：文件选项，用于查询指定文件所属的 RPM 软件包。
-rpm包的安装
-rpm -i packagename 安装包（在包所在的目录下）
-
-# -v 显示安装过程的详细处理过程
-
-# -h 显示安装包进度
-rpm -e packagename 卸载已安装的 rpm
-
-# 导入对应软件包的GPG公钥
-sudo rpm --import https://repo.mysql.com/RPM-GPG-KEY-mysql
-```
-
-- tar 包
-
-    压缩包，常见的有\.tar\.gz 和\.tar\.bz2，其中 gz 为使用 gzip 压缩的 tar 包，tar\.bz2 是以 bzip 压缩的 tar 包。
-
-    ```Bash
-    # .tar.gz .tgz 文件执行
-    tar -xvzf softname.tar.gz
-    tar -xvzf softname.tgz
-    # -x 解压缩文件
-    # -v 显示详细过程
-    # -z 支持 gzip 压缩文件
-    # -f 指定压缩文件
-    
-    tar -xvjf softname.tar.bz2
-    # -j 支持 bzip2 压缩文件
-    unzip -v softname.tar.zip
-    # -v 解压文件
-    # -d 指定解压缩目录
-    ```
-
-make
-
-```Bash
-# 执行配置、编译和安装命令
-./configure 执行配置
-make 编译
-make install 安装
-make clean 清理临时文件
-make uninstall 包的卸载
-```
-
-
-
-### 程序下载 yum dnf apt 
-
-`yum` 是 Red Hat 系列 Linux 发行版（如 CentOS, Fedora, RHEL）中使用的一个强大的**软件包管理器**。它的主要作用是**自动化软件包的安装、升级、移除以及依赖管理**。
-
-`yum` 会缓存下载的 RPM 包和元数据。清理缓存可以释放磁盘空间，有时也能解决一些因缓存问题导致的操作失败。
-
-`yum` 是在 `rpm` 软件包管理工具基础上提供了：自动依赖解析、网络仓库管理、远程软件包管理、软件包组管理、历史记录和回滚。
-
-```Bash
-# 模糊查询
-yum search <keyword>
-# 显示软件包的详细信息
-yum info <package_name>、
-# 列出所有已安装的软件包
-yum list installed
-# 列出所有可用的软件包
-yum list available
-
-# 安装软件包
-yum install <package_name>
-# 无视GPG KEY
-sudo yum install mysql-server --nogpgcheck
-# 升级软件包，不加名字默认升级所有已安装的
-yum update <package_name>
-# 移除软件包
-yum remove <package_name>
-
-# 清楚缓存
-yum clean all
-# 查看历史记录，可以重做和回滚（慎用）
-yum history list
-yum history info <id>
-yum history undo <id>
-yum history redo <id>
-```
-
-在较新的 Fedora 和 RHEL/CentOS 8\+ 版本中，`yum` 已经被 **`dnf`** \(Dandified YUM\) 取代。`dnf` 是 `yum` 的下一代版本，它在性能、依赖解析能力和用户体验方面都有所改进，并且保持了与 `yum` 相似的命令语法。
-
-
-
-### 用户 sudo whoami who w 
-
-#### 添加用户
-
-1. 使用 `useradd` 指令添加，实行该指令需要有创建用户的权限（通常为root）。
-
-2. 读取 `/etc/default/useradd` 和 `/etc/login.defs` 等配置文件，以获取默认的用户创建设置，如默认的组ID范围、家目录位置、Shell类型等。
-
-3. 系统为用户创建一个同名的新组，为其各分配一个唯一的UID与GID，`/etc/group`会更新。
-
-4. 将新用户的基本信息写入 `/etc/passwd`，并更新`/etc/shadow`，初始密码通常为空。
-
-5. 在 `/home` 目录下为新用户创建家目录，将 `/etc/skel` 目录下的默认配置文件（如 `.bashrc`, `.profile`）复制到新用户的家目录中，为其提供一个基本的登录环境。
-
-```Plain Text
-# 小g是主要组所属组，每个用户必须在仅一个所属组，存在passwd，大G是
-useradd -g -G
-# -r是系统用户 -s指定登录使用的shell
-useradd -r -s /sbin/nologin mq
-```
-
-一般使用 `/etc/passwd` 文件限制用户权限
-
-```Plain Text
-用户名|密码占位符|UID|GID|用户信息|主目录|默认shell
-root:x:0:0:root:/root:/bin/bash
-daemon:x:1:1:daemon:/usr/sbin:/usr/sbin/nologin
-bin:x:2:2:bin:/bin:/usr/sbin/nologin
-sys:x:3:3:sys:/dev:/usr/sbin/nologin
-```
-
-`/usr/sbin/nologin` 是一个程序，作用是拒绝登录，当尝试登陆时会显示题是并立即终止登录会话。
-
-#### 关于sudo
-
-```Bash
-sudo 的uid，gid，groups都是0
-sudo bash #sudo打开bash
-exit #退出bash
-
-sudo -l查看当前可以使用的命令
-sudo -u <用户名> <命令>
-将允许当前用户，提权到<用户名>的身份，再执行后面的<命令>
-# useradd添加的用户，并不具备sudo权限。需要将用户加入admin组或者wheel组或者sudo组。
-# usermod -a -G wheel <用户名>
-```
-
-在 `/etc/sudoers` 当中可设置用户能够执行什么命令，和能否切换要不要密码的配置信息
-
-
-
-root用户键入`visudo`进入sudo配置，主动添加（不会自动添加）
-
-
-
-```Bash
-[用户名] [主机名] [以主机什么用户权限执行命令] [是否需要密码] [能够执行的命令]
-zhang ALL=(ALL) NOPASSWD： NETWORKING
-zhang用户可以在任意主机上不输入密码的情况下以任意用户执行NETWORKING命令 
-
-user01 localhost=(root) NOPASSWD:/usr/bin/passwd,!/usr/bin/passwd root
-用户可以执行passwd程序，但是不能修改root密码,在命令前面加上叹号表示不能执行该程序。
-
-Host_Alias （主机别名）
-
-Cmnd_Alias （命令别名）
-Cmnd_Alias PROCESSES = /bin/nice, /bin/kill, /usr/bin/kill, /usr/bin/killall
-Cmnd_Alias SOFTWARE = /bin/rpm, /usr/bin/up2date, /usr/bin/yum
-
-
-User_Alias （用户别名，可以是用户，用户组）
-定义
-User_Alias group1 = user1, user2
-
-Runas_Alias （目的用户别名）
-```
-
-[Linux sudo和sudoers详解！ \- 掘金 \(juejin\.cn\)](https://juejin.cn/post/6992609027234463758)
-
-#### 查看用户的信息
-
-```Bash
-
-whoami # 查询当前用户名字
-USER2022102157
-who    # 显示当前所有登陆用户的信息
-w      # 显示目前登入系统的用户信息
- 20:39:37 up 136 days,  3:58,  1 user,  load average: 0.00, 0.00, 0.00
-USER     TTY      FROM              login@   IDLE   JCPU   PCPU WHAT
-root     pts/0    222.94.97.122    20:39    1.00s  0.00s  0.00s w
-```
-
-
-
-### 用户组 id
-
-#### 添加用户到对应组
-
-
-
-1. 可以先查看对应组是否存在
-
-```Bash
-grep '^mysql:' /etc/group
-```
-
-2. 使用 `usermod` 指令
-
-```Bash
-# 添加用户到sudo组 a表示附加 G后面接对应的组
-usermod -aG sudo vex
-# 添加用户到docker组
-sudo usermod -aG docker pbl
-```
-
-
-
-一般来说，根据创建用户的属性，可能会分配给不同的组，建议使用脚本来完成这一切。
-
-`/etc/group` 
-
-！注意更新用户组后要重新登陆
-
-使用 `groupadd`和 `id` 添加和查看组信息
-
-```Plain Text
-sudo groupadd docker
-```
-
-#### 查看用户组信息
-
-```Bash
-id root
-```
-
-#### 
-
-### 磁盘 df du mount
-
-
-
-`df`显示磁盘的相关信息
-
-
-
-如果没有文件名参数，则显示所有当前已挂载文件系统的磁盘空间使用情况
-
-
-
-```Bash
-默认是KB为单位
--h或--human-readable：以可读性较高的方式来显示信息 MB GB
--i或--inodes：显示inode的信息；df -h /home
-
-文件系统              容量    已用   可用  已用% 挂载点
-/dev/sda2             140G   27G  106G  21% /
-/dev/sda1             996M   61M  884M   7% /boot
-tmpfs                1009M     0 1009M   0% /dev/shm
-/dev/sdb1             2.7T  209G  2.4T   8% /data1 
-```
-
-
-
-`du`显示每个文件和目录的磁盘使用空间
-
-
-
-```Bash
-du -sh * |sort -rh
-2.9M    command
-1.9M    assets
-148K    template
-72K     package-lock.json
-52K     dist
-28K     build
-16K     README.md
-4.0K    renovate.json
-4.0K    package.json
-4.0K    LICENSE 
-只显示当前目录下子目录的大小。
-du -sh ./*/
-查看指定目录下文件所占的空间：
-du ./*
-显示总和的大小且易读:
-du -sh .
--s仅显示总计，只列出最后加总的值。
-```
-
-
-
-`mount` 命令挂载磁盘分区文件系统，`umount` 卸载命令
-
-
-
-```Bash
-# 将 ext3 文件系统的第二块 scsi 的第一个分区挂载到/media/test 目录下
-mount -t ext3 /dev/sdb1 /media/test 
-mount /dev/sdb2 /media/dir 将第二块 scsi 的第二个分区挂载到/media/dir 目录下
-# -t 参数指定文件系统类型
-# -a 手动挂载所有在 /etc/fstab 中定义的文件系统
-
-umount /media/test 将挂载在/media/test 目录下的文件系统卸载
-```
-
-
-
-
-
-
-
-### 文本处理 grep awk sed tr tac sort uniq wc
-
-
-
-`grep`匹配文本中字符并输出
-
-
-
-```Bash
-grep [options] PATTERN [FILE...]
-注意：是文件流不可以是一行文本
-options：命令参数。常用的参数有：
--o 只输出匹配到的部分
--i 忽略字符大小写----------------
--v 过滤掉匹配到的内容
--E 支持使用扩展正则表达式 
--R -r 查找所有子文件----------------
--c 输出各个匹配文件出现的次数
--w 完全匹配
--C n 在匹配行前后各显示n行。----------
--B n 在匹配行前显示n行，覆盖。
--A n 在匹配行后显示n行，覆盖。
-PATTERN：可使用普通字符串以及正则表达式(标准&扩展)
-
-grep -q "hello" filename
-# -q静默运行只返回0找到，1没找到
-grep -C 4 -B 2 -A 3 "line1" ./tstdir/test-data1.txt
--B会覆盖-C
-```
-
-
-
-`sed`用于对文本进行流式编辑，常用于文本替换和文本过滤。
-
-
-
-[sed 命令，Linux sed 命令详解：功能强大的流式文本编辑器 \- Linux 命令](https://wangchujiang.com/linux-command/c/sed.html)
-
-
-
-```Bash
-sed [options] 'sed command ' filename
-s\    表示查找并替换
-a\    在当前行下面插入文本
-i\    在当前行上面插入文本
--i    表示直接修改源文件
--E    支持扩展表达式
--e  表示可以指定表达式
-替换标记：
-g # 表示行内全面替换。  
-p # 表示打印行。  
-w # 表示把行写入一个文件。  
-x # 表示互换模板块中的文本和缓冲区中的文本。
-//调用脚本 
-sed [options] -f 'sed command'
-
-//替换文本中的指定字符串,G
-sed 's/pattern/replacement/g' filename
-
-sed  's/unix/linux/2' sedtest.txt 
-# 将 sedtest.txt 文件中的第二个 unix 替换为 linux，并在终端输出结果
-
-# 删除文件中匹配指定模式的行
-sed '/pattern/d' filename
-
-# 只显示文件中匹配指定模式的行
-sed -n '/pattern/p' filename
-
-# 编辑指定行范围内的文本
-sed '3,5d' filename
-```
-
-
-
-`awk`是一种强大的文本处理工具，通常用于对结构化文本数据进行处理和分析。它以行为单位逐行处理输入文件，并且能够按照用户定义的规则进行匹配、处理和输出。还可以进行数学计算
-
-
-
-```Bash
-awk 'pattern {action}' input_file
-# pattern用于匹配文本行，action定义了匹配成功时执行的操作,如果pattern为空，则默认匹配所有行
-awk内置变量
-FS：字段分隔符
-OFS：输出数据的字段分隔符
-RS：记录分隔符
-ORS：输出字段的行分隔符
-NF：字段数 几个小节，比如： 权限 链接数 所有者-----------
-NR：记录数/行号 1234567 ----------------------
-
--F ’,‘ 指定分隔符
-
-ls -al|awk '{printf"%-20.20s%s\n",$9,$8}'
-# $8 和 $9 分别代表文件的权限和所有者
-# %-20.20s 表示左对齐，宽度为20，如果宽度超过20，则截断
-ls -al | awk '{print NR,NF}'
-```
-
-
-
-**tr命令** 可以对来自标准输入的字符进行替换、压缩和删除。
-
-
-
-```Bash
-tr(选项)(参数)
--c或——complerment：取代所有不属于第一字符集的字符；
--d或——delete：删除所有属于第一字符集的字符；
--s或--squeeze-repeats：把连续重复的字符以单独一个字符表示；
--t或--truncate-set1：先删除第一字符集较第二字符集多出的字符。 
-
-tr a-z A-Z
-
-使用tr删除字符：
-echo "hello 123 world 456" | tr -d '0-9'
-hello  world 
-
-将制表符转换为空格：
-cat text | tr '\t' ' '
-
-用tr压缩字符，可以压缩输入中重复的字符：
-echo "thissss is      a text linnnnnnne." | tr -s ' sn'
-this is a text line.
-```
-
-
-
-tac 反向显示文件内容
-
-
-
-处理多个文件时，依次将每个文件反向显示，而不是将所有文件连在一起再反向显示
-
-
-
-`sort`
-
-
-
-```Bash
-sort
--r, --reverse            将结果倒序排列。
--n, --numeric-sort,-g    n根据基本数字排序。 g是浮点数计算型排序
--R, --random-sort        随机排序，但分组相同的行。
--h, --human-numeric-sort 根据存储容量排序(注意使用大写字母，例如：2K 1G)。
--d, --dictionary-order   仅考虑空白、字母、数字。
--f, --ignore-case        将小写字母作为大写字母考虑。
--k, --key=KEYDEF         通过一个key排序；KEYDEF给出位置和类型。
-
-cat sort.txt
-aaa:10:1.1
-ccc:30:3.3
-ddd:40:4.4
-bbb:20:2.2
-eee:50:5.5
-eee:50:5.5
-
-sort sort.txt
-aaa:10:1.1
-bbb:20:2.2
-ccc:30:3.3
-ddd:40:4.4
-eee:50:5.5
-eee:50:5.5
-
-
-sort -u sort.txt
-aaa:10:1.1
-bbb:20:2.2
-ccc:30:3.3
-ddd:40:4.4
-eee:50:5.5
-
-# 将BB列按照数字从小到大顺序排列：
-sort -nk 2 -t: sort.txt
-AAA:BB:CC
-bbb:10:2.5
-ddd:20:4.2
-aaa:30:1.6
-eee:40:5.4
-ccc:50:3.3
-eee:60:5.1
-
-# 将CC列数字从大到小顺序排列：
-# -n是按照数字大小排序，-r是以相反顺序，-k是指定需要排序的栏位，-t指定栏位分隔符为冒号
-sort -nrk 3 -t: sort.txt
-eee:40:5.4
-eee:60:5.1
-ddd:20:4.2
-ccc:50:3.3
-bbb:10:2.5
-aaa:30:1.6
-AAA:BB:CC
-```
-
-
-### 系统login logout exit shutdown
-
-```Bash
-login 登入系统
-logout 登出系统
-exit 注销当前用户
-clear 清屏命令
-
-shutdown 关机命令
-shutdown now 立即进入维护模式
-halt 直接关机
-shutdown -h now 立即关机
-shutdown -r now 立即重新启动计算机
-shutdown -h 20:00& 20:00 关闭计算机
-shutdown -r 20:00& 20:00 重新启动计算机
-shutdown -k 3 warning:system will shutdown! 只是发送消息给所以用户 3 分钟后进入维护模式
-shutdown +3 "system will shutdown after 3 minutes!" 发送消息给所以用户 3 分钟后进入系统维护模式
-```
-
-
-
-### 进程执行 nice
-
-
-
-调整程序执行的优先权等级
-
-
-
-\-n：指定nice值（整数，\-20（最高）\~19（最低））。
-
-
-
-```Bash
-nice --20 command 最高优先
-nice -19  command 最低优先
-nice -n -20 command 最高
-nice -n 19 command 最低
-```
-
-### 进程监控 ps pstree top htop otop iotop
-
-`ps`用于报告当前系统的进程状态。
-
-可以搭配kill指令随时中断、删除不必要的程序。
-
-ps命令是最基本同时也是非常强大的进程查看命令，使用该命令可以确定有哪些进程正在运行和运行的状态、进程是否结束、进程有没有僵死、哪些进程占用了过多的资源等等
-
-
-```Bash
--a：显示所有终端机下执行的程序，除了阶段作业领导者之外。
-a：显示现行终端机下的所有程序，包括其他用户的程序。
--A：显示所有程序。
-
-
-ps -ef 
-ps -aux
-# 检查mysqld的进程
-ps aux | grep mysqld
-
-pstree //显示init开始的整个进程树
-pstree $$ -p //从当前bash开始，显示进程
-```
-
-
-
-### 网络监测
-
-nmop
-
-netstat
-
-iptables
-
-
-
-dig
-
-
-
-ss
-
-
-
-scp
-
-
-
-### 性能监控 uptime pmap iperf free vmstat ifstat
-
-
-
-#### uptime 查看系统负载信息
-
-
-
-现在时间、系统已经运行了多长时间、目前有多少登陆用户、系统在过去的1分钟、5分钟和15分钟内的平均负载。
-
-
-
-#### pmap 报告进程的内存映射关系
-
-
-
-
-
-
-
-```Bash
-pmap -x 5371
-5371:   nginx: worker process                
-Address           Kbytes     RSS   Dirty Mode   Mapping
-0000000000400000     564     344       0 r-x--  nginx
-```
-
-
-
-#### ifstat 统计网络接口流量状态
-
-
-
-默认ifstat不监控回环接口，显示的流量单位是KB。
-
-
-
-#### iperf 网络性能测试工具
-
-
-
-可以测试TCP和UDP带宽质量，报告带宽，延迟抖动和数据包丢失。
-
-
-
-#### free 显示内存使用情况
-
-
-
-显示当前系统未使用的和已使用的内存数目，还可以显示被内核使用的内存缓冲区
-
-
-
-#### vmstat 显示虚拟内存状态
-
-
-
-### 表达式计算 expr bc
-
-
-
-expr支持四则运算： `+` 、`-` 、 `\*` 、`/`、 `%`
-
-
-
-bc支持任意精度的交互执行的计算器语言，包括浮点运算。
-
-
-
-### 文件树
-
-tree命令行参数：
-
-- \-a 显示所有文件和目录。
-
-- \-A 使用ASNI绘图字符显示树状图而非以ASCII字符组合。
-
-- \-C 在文件和目录清单加上色彩，便于区分各种类型。
-
-- \-d 显示目录名称而非内容。
-
-- \-D 列出文件或目录的更改时间。
-
-- \-f 在每个文件或目录之前，显示完整的相对路径名称。
-
-- \-F 在执行文件，目录，Socket，符号连接，管道名称名称，各自加上"\*","/","=","@","\|“号。
-
-- \-g 列出文件或目录的所属群组名称，没有对应的名称时，则显示群组识别码。
-
-- \-i 不以阶梯状列出文件或目录名称。
-
-- \-I 不显示符合范本样式的文件或目录名称。
-
-- \-l 如遇到性质为符号连接的目录，直接列出该连接所指向的原始目录。
-
-- \-n 不在文件和目录清单加上色彩。
-
-- \-N 直接列出文件和目录名称，包括控制字符。
-
-- \-p 列出权限标示。
-
-- \-P 只显示符合范本样式的文件或目录名称。
-
-- \-q 用”?"号取代控制字符，列出文件和目录名称。
-
-- \-s 列出文件或目录大小。
-
-- \-t 用文件和目录的更改时间排序。
-
-- \-u 列出文件或目录的拥有者名称，没有对应的名称时，则显示用户识别码。
-
-- \-x 将范围局限在现行的文件系统中，若指定目录下的某些子目录，其存放于另一个文件系统上，则将该子目录予以排除在寻找范围外。
-
-## 二、输入输出
-
-
-
-### 1\.标准输入/输出
-
-
-
-> Linux宗旨：一切皆文件   
-> 
-> 
-> 
-> 一般文件、进程、I/0都用文件描述符来表示
-> 
-> 
-
-
-
-- 标准输入：0 
-
-    
-
-- 标准输出：1
-
-    
-
-- 标准错误：2
-
-    
-
-> 区分`stdout`和`STDOUT_FILENO`
-> 
-> 
-
-
-
-- stdout 是C语言文件流 FILE\* 定义在 stdio\.h\.
-
-    
-
-- STDOUT\_FILENO 是整数值1的宏 定义在 unistd\.h\. 
-
-    
-
-> 重要函数
-> 
-> 
-
-
-
-\<stdio\.h\>
-
-
-
-```C
-int sprintf(char *str, const char *format, ...);
-//复制文件描述符，目标dp2已打开则关闭并返回新的，未打开则打开新的
-int dup(int oldfd);
-fd2 = dup(fd1)
-```
-
-
-
-\<unistd\.h\>
-
-
-
-- read\(\) \&\& write\(\)
-
-    
-
-```C
-ssize_t write(int fd, const void *buf, size_t count);
-ssize_t read(int fd, void *buf, size_t count);
-```
-
-
-
-\<sys/ioctl\.h\>  Linux系统中一个系统调用（system call）
-
-
-
-```C
-ioctl()
-```
-
-
-
-\<fcntl\.h\>
-
-
-
-```C
-int open(const char *pathname, int flags, mode_t mode);
-fd1 = open()
-```
-
-
-
-### 2\.重定向
-
-
-
-> 不重定向输出：（既会打出‘标准输出’，也会打出‘标准错误’）
-> 
-> 
-
-
-
-```Plain Text
-$ls exist.txt non-extist.txt
-```
-
-
-
-> 重定向输出：可自定义输出到文件而非终端 \&1：文件描述符
-> 
-> 
-> 
-> 重定向符
-> 
-> '\>' \('1\>'\)    标准输出覆盖
-> 
-> '2\>'            标准错误
-> 
-> '\>\>'        标准输出追加
-> 
-> '2\>\>'            标准错误追加
-> 
-> '2\>\&1' \|\| '\&\>'    错误输出（stderr）重定向到标准输出（stdout）
-> 
-> 
-> 
-> \&\>             正常输出和错误输出都重定向到同一个文件
-> 
-> 
-
-
-
----
-
-
-
-> 将命令执行成功/失败的结果输出
-> 
-> 
-
-
-
-```C
-$ls exist.txt non-exist.txt 1> suc.txt 2> fail.txt
-$ls exist.txt non-extist.txt > result.txt 
-```
-
-
-
-> 关闭标准输入输出
-> 
-> 
-
-
-
-```C
-ls exists.txt no-exists.txt 2> /dev/null //关闭输出
-ls exists.txt no-exists.txt 2> &1 1> /dev/null 
-```
-
-
-
-> Detect if stdout is 重定向 ？
-> 
-> 
-
-
-
-```C
-include <unistd.h>
-int isatty(int fd);
-```
-
-
-
-如果打开的文件描述符 fa 连接到一个终端，则系统调用isatty返回1，否则返回0。
-
-
-
-在这个程序中，你使用的是文件流，但isatty只能对文件描述符进行操作。为了提供必要的转换，你需要把 isatty调用 与 fileno函数结合使用。
-
-
-
-```C
-//检查是否存在输出重定向
-#include <unistd.h>
-
-if(!isatty(fileno(stdout))){
-        fprintf(stderr, "you are not a terminal\n" ); //说明被重定向了！
-        exit(1);
-    }
-```
-
-
-
-### 3\.用户终端输入
-
-
-
----
-
-
-
-### 4\.shell命令行解释器
-
-
-
-用户无法直接访问内核，借助shell来调度内核
-
-
-
-shell 脚本就是由Shell命令组成的执行文件，不用编译即可运行，它通过解释器解释运行
-
-
-
-### 5\.杂项
-
-
-
-- 转义字符
-
-\[https://gist\.github\.com/fnky/458719343aabd01cfb17a3a4f7296797\]
-
-
-
-- 浮点数
-
-31 = 1（符号）\+ 8（指数）\+ 23（小数）
-
-
-
-## 三、终端
-
-
-
-#### TTY
-
-*其实是始于 19 世纪 30 年代的Teletypewriter的缩写，最早的输入/输出设备电传打字机编程虚拟设备。在 Linux 或 UNIX 中，TTY 变为了一个抽象设备。有时它指的是一个物理输入设备，例如串口，有时它指的是一个允许用户和系统交互的虚拟 TTY（*[*参考此处*](https://link.zhihu.com/?target=https%3A//unix.stackexchange.com/questions/4126/what-is-the-exact-difference-between-a-terminal-a-shell-a-tty-and-a-con)*）。*
-
-#### \.profile
-
-
-
-`.profile` 是一个 shell 脚本，通常位于用户的家目录下。它是一个初始化文件，用于在用户登录时执行一些命令或设置环境变量。
-
-
-
-## 四、 进程运行
-
-
-
-```Bash
-source .profile
-```
-
-
-
-### 1\.Init进程
-
-
-
-### 2\. 编译程序
-
-
-
-##### 可执行文件（ELF）
-
-
-
-c编译过程 \.c \-\-\- 预编译\.i \-\-\- 编译\.s \-\-\- 汇编\.o \-\-\-连接elf
-
-
-
-##### linux汇编（ATT语法，相对于x8086的intel）
-
-
-
-在`ATT`语法中，寄存器前冠以`％`，而立即数前冠以`$`，十六进制立即数前冠以“0x”
-
-
-
-objdump帮助我们从可执行文件中反汇编出汇编代码，从而逆向分析工程。
-
-
-
-### 3\. linux进程地址空间划分
-
-
-
-1. \.进程地址空间的布局
-
-    
-
-    linux 64位系统，可用空间地址为2^\{64\}Byte，操作系统仅用低47位（256TB）,一半给kernel，一半给user space。
-
-    
-
-    user space包含环境变量、命令行参数、栈、内存映射段、堆、bss段、ds段、text段
-
-    
-
-    附 ：
-
-    
-
-    - 位数指CPU的数据总线宽度，意味着寄存器的位数，表示了CPU一次能处理的数据位数
-
-        
-
-    - 一般数据总线和地址总线是相同的（x8086不是，所以做了地址扩展）
-
-        
-
-    - 地址总线的宽度意味着主存的大小，因为这里存储单元是一字节，所以20位地址线相当于2^\{20\}字节
-
-        
-
-2. 代码段cs
-
-- 存放cpu指令
-
-3. 数据段ds
-
-- 存放程序中\*\*已初始化且初值不为0\*\*的\*\*全局变量\*\*和\*\*静态局部变量\*\*。数据段属于静态内存分配\(静态存储区\)，可读可写。
-
-4. bss段
-
-- 未初始化的全局变量和静态局部变量
-
-- 初始值为0的全局变量和静态局部变量\(依赖于编译器实现\)
-
-- 未定义且初值不为0的符号\(该初值即common block的大小\)
-
-5. 堆
-
-- 堆用于存放进程运行时动态分配的内存段，可\*\*动态扩张或缩减\*\*。
-
-    
-
-- 堆中内容是匿名的，不能按名字直接访问，只能通过指针间接访问。当进程调用malloc\(C\)/new\(C\+\+\)等函数分配内存时，新分配的内存动态添加到堆上\(扩张\)；当调用free\(C\)/delete\(C\+\+\)等函数释放内存时，被释放的内存从堆中剔除\(缩减\) 。
-
-    
-
-- 堆的末端由break指针标识，当堆管理器需要更多内存时，可通过系统调用brk\(\)和sbrk\(\)来移动break指针以扩张堆，一般由系统自动调用。
-
-    
-
-- 可见，堆容易造成内存碎片；由于没有专门的系统支持，效率很低；由于可能引发用户态和内核态切换，内存申请的代价更为昂贵
-
-    
-
-- 操作系统为堆维护一个记录空闲内存地址的链表。当系统收到程序的内存分配申请时，会遍历该链表寻找第一个空间大于所申请空间的堆结点，然后将该结点从空闲结点链表中删除，并将该结点空间分配给程序。若无足够大小的空间\(\*\*可能由于内存碎片太多\*\*\)，有可能调用系统功能去增加程序数据段的内存空间，以便有机会分到足够大小的内存，然后进行返回
-
-6. 内存映射段（mmap）
-
-- **mmap通过将磁盘文件映射到用户空间**，进程可以像访问普通内存一样对文件进行访问，不必再调用read\(\)/write\(\)等操作。用户也可创建匿名内存映射，该映射没有对应的文件, 可用于存放程序数据。 
-
-    
-
-- 
-
-    
-
-- malloc申请内存的大小超过128K就会\*\*使用mmap分配内存，在堆和栈之间找一块空闲内存分配\(对应独立内存，而且初始化为0\)
-
-7. 栈
-
-- 由编译器自动分配释放
-
-- 为函数内部声明的非静态局部变量\(C语言中称“自动变量”\)提供存储空间
-
-- 记录函数调用过程相关的维护性信息，称为栈帧\(Stack Frame\)或过程活动记录\(Procedure Activation Record\)
-
-- 栈的大小在运行时由内核动态调整。
-
-- Linux中ulimit \-s命令可查看和设置堆栈最大值，当程序使用的堆栈超过该值时, 发生栈溢出\(Stack Overflow\)，程序收到一个段错误\(Segmentation Fault\)。
-
-8. 举例
-
-    
-
-```C
-//main.cpp  
-int a = 0; 全局初始化区  
-char *p1; 全局未初始化区  
-main()  
-{  
-      int a = 4; 栈,4也是存在栈上  
-      char s[] = "abc"; 栈  "abc"也是存在栈上
-      char *p2; 栈  
-      char *p3 = "123456"; 123456\0在常量区（是在Data段上），p3在栈上。  
-      static int c =0； 全局（静态）初始化为0,就是放在BSS段   
-      p1 = (char *)malloc(10);  
-      p2 = (char *)malloc(20);  
-      malloc分配得来得10和20字节的区域就在堆区。因为属于动态申请分配内存空间  
-      strcpy(p1, "123456"); 123456\0放在常量区，编译器可能会将它与p3所指向的"123456"优化成一个地方。  
-}
-```
-
-
-
-### 4\. 子进程与父进程
-
-
-
-```C
-fork();
-wait(0);
-```
-
-
-
-附：库
-
-
-
-\<unistd\.h\>
-
-
-
-\<sys/wait\.h\>
-
-
-
-\<sys/types\.h\>
-
-
-
-### 5\. exec 程序与进程
-
-
-
-Q:程序如何变成进程？
-
-
-
-A:通过替代命令行变量和环境变量（将原进程的代码段、数据段、堆栈等内容替代）
-
-
-
-\<unistd\.h\>
-
-
-
-```C
-//要执行的新程序的路径,传递给新程序的命令行参数,传递给新程序的环境变量的空指针结尾的字符串数组
-int execve(const char *filename, char *const argv[], char *const envp[]);
-```
-
-
-
-调用`execve()`之后，原程序的执行流程会终止，而被指定的新程序开始执行。
-
-
-
-值得注意的是，如果`execve()`调用成功，它将不会返回；如果发生错误，它会返回\-1，并设置`errno`以指示错误类型。
-
-
-
-### 6\.后台进程、前台进程、作业
-
-
-
-`CTRL+C`: 杀死进程
-
-
-
-`CTRL+Z`: 阻塞进程
-
-
-
-```Bash
-# 列出所有后台运行的作业
-jobs    
-# 后台执行
-./progress & 
-# 将作业编号为 1 的作业放到前台运行 默认最近一个
-fg %1
-# 将作业编号为 1 的作业放到后台运行
-bg %1
-```
-
-
-
-### 7\.守护进程
-
-
-
-##### 定义
-
-
-
-    daemon 是独立于控制终端并且周期性地执行某种任务或等待处理某些发生的事件，如日志进程syslogd、 web服务器httpd、邮件服务器sendmail和数据库服务器mysqld等\.
-
-
-
-    一个守护进程的父进程是init进程，因为它真正的父进程在fork出子进程后就先于子进程exit退出了，所以它是一个由init继承的孤儿进程。
-
-
-
-    守护进程的名称通常以d结尾，比如sshd、xinetd、crond等
-
-
-
-##### 创建
-
-
-
-进程组——一组进程的集合
-
-
-
-- 进程组中的所有进程都共享相同的 PGID
-
-    
-
-- 每个进程也属于一个进程组
-
-    
-
-- 一个进程只能为它自己或子进程设置进程组ID号
-
-    
-
-- 进程组可以作为一个单元接收信号
-
-    
-
-会话期——一组相关的进程组的集合
-
-
-
-```C
-//建立一个session
-setsid()
-```
-
-
-
-### 附：作业命令
-
-
-
-```Bash
-crond进程每分钟会定期检查是否有要执行的任务，如果有要执行的任务，则自动执行该任务。
-
-atq：列出所有待执行的 at 作业。
-cron：管理 cron 作业，用于定期重复执行任务。
-```
-
-
-
-`at`：用于提交 at 作业，即指定在特定时间运行的任务。 
-
-
-
-能够接受在当天的hh:mm（小时:分钟）式的时间指定。假如该时间已过去，那么就放在第二天执行。当然也能够使用midnight（深夜），noon（中午），teatime（饮茶时间，一般是下午4点）等比较模糊的 词语来指定时间。用户还能够采用12小时计时制，即在时间后面加上AM（上午）或PM（下午）来说明是上午还是下午。 也能够指定命令执行的具体日期，指定格式为month day（月 日）或mm/dd/yy（月/日/年）或dd\.mm\.yy（日\.月\.年）。指定的日期必须跟在指定时间的后面。
-
-
-
-上面介绍的都是绝对计时法，其实还能够使用相对计时法，这对于安排不久就要执行的命令是很有好处的。指定格式为：`now + count time-units`，now就是当前时间，time\-units是时间单位，这里能够是minutes（分钟）、hours（小时）、days（天）、weeks（星期）。count是时间的数量，究竟是几天，还是几小时，等等。 更有一种计时方法就是直接使用today（今天）、tomorrow（明天）来指定完成命令的时间。
-
-
-
----
-
-
-
-`batch`用于在指定时间，当系统不繁忙时/负载较低时    执行任务，用法与at相似。
-
-
-
-```Bash
-命令将被提交给 cron 守护进程，并在系统负载较低时执行，同时指定了一个较低的优先级
-batch -p 10 /path/to/your/long-running-command
--p 指定作业的优先级，数字越小，优先级越高。
-```
-
-
-
----
-
-
-
-`crontab`提交和管理用户的需要周期性执行的任务
-
-
-
-`/etc/crontab`文件包括下面几行：
-
-
-
-```Shell
-SHELL=/bin/bash
-PATH=/sbin:/bin:/usr/sbin:/usr/bin
-MAILTO=""HOME=/
-
-# run-parts
-51 * * * * root run-parts /etc/cron.hourly
-24 7 * * * root run-parts /etc/cron.daily
-22 4 * * 0 root run-parts /etc/cron.weekly
-42 4 1 * * root run-parts /etc/cron.monthly
-```
-
-
-
-**用户任务调度：** 用户定期要执行的工作，比如用户数据备份、定时邮件提醒等。用户可以使用 crontab 工具来定制自己的计划任务。所有用户定义的crontab文件都被保存在`/var/spool/cron`目录中。
-
-
-
-crontab文件的含义：用户所建立的crontab文件中，每一行都代表一项任务，每行的每个字段代表一项设置，它的格式共分为六个字段，前五段是时间设定段，第六段是要执行的命令段，格式如下：
-
-
-
-```Shell
-minute   hour   day   month   week   command     顺序：分 时 日 月 周
-
-每1分钟执行一次command
-* * * * * command
-
-每晚的21:30重启smb 
-30 21 * * * /etc/init.d/smb restart
-
-每周六、周日的1:10重启smb
-10 1 * * 6,0 /etc/init.d/smb restart
-```
-
-
-
-在以上各个字段中，还可以使用以下特殊字符：
-
-
-
-- 星号（\*）：代表所有可能的值，例如month字段如果是星号，则表示在满足其它字段的制约条件后每月都执行该命令操作。
-
-- 逗号（,）：可以用逗号隔开的值指定一个列表范围，例如，“1,2,5,7,8,9”
-
-- 中杠（\-）：可以用整数之间的中杠表示一个整数范围，例如“2\-6”表示“2,3,4,5,6”
-
-- 正斜线（/）：可以用正斜线指定时间的间隔频率，例如“0\-23/2”表示每两小时执行一次。同时正斜线可以和星号一起使用，例如\*/10，如果用在minute字段，表示每十分钟执行一次。
-
-    
-
-## 五、信号机制
-
-
-
-> 信号\(signal\)是一种软中断，信号机制是进程间通信的一种方式，采用异步通信方式
-> 
-> 
-> 
-> 共有64个，1\-32不可靠信号，1\-31非实时信号，
-> 
-> 
-
-
-
-### 1\.信号表
-
-
-
-```Bash
-kill -l
- 1) SIGHUP挂起  2) SIGINT ctrl+c 3) SIGQUIT ctrl+\4) SIGILL       5) SIGTRAP
- 6) SIGABRT      7) SIGBUS       8) SIGFPE       9) SIGKILL     10) SIGUSR1 用户自定义
-11) SIGSEGV     12) SIGUSR2     13) SIGPIPE     14) SIGALRM     15) SIGTERM
-16) SIGSTKFLT   17) SIGCHLD     18) SIGCONT     19) SIGSTOP     20) SIGTSTP
-21) SIGTTIN     22) SIGTTOU     23) SIGURG      24) SIGXCPU     25) SIGXFSZ
-26) SIGVTALRM   27) SIGPROF     28) SIGWINCH    29) SIGIO       30) SIGPWR
-31) SIGSYS      34) SIGRTMIN    35) SIGRTMIN+1  36) SIGRTMIN+2  37) SIGRTMIN+3
-38) SIGRTMIN+4  39) SIGRTMIN+5  40) SIGRTMIN+6  41) SIGRTMIN+7  42) SIGRTMIN+8
-43) SIGRTMIN+9  44) SIGRTMIN+10 45) SIGRTMIN+11 46) SIGRTMIN+12 47) SIGRTMIN+13
-48) SIGRTMIN+14 49) SIGRTMIN+15 50) SIGRTMAX-14 51) SIGRTMAX-13 52) SIGRTMAX-12
-53) SIGRTMAX-11 54) SIGRTMAX-10 55) SIGRTMAX-9  56) SIGRTMAX-8  57) SIGRTMAX-7
-58) SIGRTMAX-6  59) SIGRTMAX-5  60) SIGRTMAX-4  61) SIGRTMAX-3  62) SIGRTMAX-2
-```
-
-
-
-### 2\.  信号产生
-
-
-
-硬件方式：用户输入/硬件异常
-
-
-
-软件方式：系统调用，发送signal信号，如kill\(\), abort\(\), alarm\(\)
-
-
-
-```Bash
-kill -SIGUSR (pid)
-```
-
-
-
-### 3\. 注册和注销
-
-
-
-在进程task\_struct结构体中有一个未决信号的成员变量 `struct sigpending pending`。每个信号在进程中注册都会把信号值加入到进程的未决信号集。
-
-
-
-- 非实时信号发送给进程时，如果该信息已经在进程中注册过，\*\*不会再次注册\*\*，故信号会丢失；
-
-    
-
-- 实时信号发送给进程时，不管该信号是否在进程中注册过，都会再次注册。故信号不会丢失；
-
-    
-
-- 非实时信号：不可重复注册，最多只有一个sigqueue结构；当该结构被释放后，把该信号从进程未决信号集中删除，则信号注销完毕；
-
-    
-
-- 实时信号：可重复注册，可能存在多个sigqueue结构；当该信号的所有sigqueue处理完毕后，把该信号从进程未决信号集中删除，则信号注销完毕；
-
-    
-
-### 4\. C程序中信号
-
-
-
-可用于忽略和恢复linux中的信号
-
-
-
-void func（int），或者是下面的特殊值：
-
-
-
-    SIG\_IGN:忽略信号  
-
-
-
-    SIG\_DFL:恢复信号的默认行为
-
-
-
-```C
-#include <signal.h>
-void (*signal(int sig, void (*func)(int)))(int);
-
-main:
-(void) signal(SIGINT, func1);    //改变终端中断信号SIGINT的默认行为
-
-func1(int sig):
-printf("\n I got signal %d \n", sig);   //  显示捕获的信号
-(void) signal(SIGINT, SIG_DFL);  // 恢复终端中断信号SIGINT的默认行为
-```
-
-
-
----
-
-
-
-pause
-
-
-
-```C
-pause(); //等待直到接收到信号唤醒
-```
-
-
-
-## 六、进程通信
-
-
-
-#### 1\.管道
-
-
-
-管道是单向的、先进先出的、无结构的、固定大小的字节流。
-
-
-
-管道通过文件把一个进程的标准输出和另一个进程的标准输入连接在一起。
-
-
-
-**管道的特点：**
-
-
-
--   管道是半双工的，只要确定了管道的数据流向，就不再允许更改。要双向通信时，要建立两处管道。
-
-    
-
--    只能用于有亲缘关系的进程间通信（如父子进程、兄弟进程等）。
-
-    
-
-```C
-#include <unistd.h>
-int filedes[2];
-//读端[0] 写端[1], 返回值-1失败
-原型：#include <unistd.h>
-int pipe(int filedes[2]);
-        功能：创建一个管道文件。
-        返回值：若成功则返回0，否则返回-1
-参数:filedes返回两个文件描述符：filedes[0]为读而打开，filedes[1]为写而打开。filedes的输出是filedes[1]的输出是filedes[0]的输入。
-
-原型：size_t write(int filedes,const void * buf,size_t nbytes);    //写
-功能：把buf开始nbytes字节的内容插入到filedes所指出的文件的当前位置。
-返回值：若成功则返回已写的字节数，若出错则返回-1
-
-原型：size_t read(int filedes,const void* buf,size_t nbytes);   //读
-功能：从filedes所指出的文件的当前位置，读取nbytes个字节数据，并存放在
-buf所指出的缓冲区中。
-返回值：若成功则返回读到的字节数，若已到文件结尾则返回0,若出错则返回-1。
-
-原型：int close(int filedes);
-功能：关闭由filedes所指出的文件。
-返回值：若成功则返回0，若出错则返回-1。
-
-//对文件加锁/解锁 cmd控制命令F_LOCK(1), F_ULOCK(0), len字节数
-int lockf(int fd, int cmd, off_t len); 
-注：lockf()函数允许将文件区域用作信号量（监视锁）或用于控制对锁定进程的访问（强制模式记录锁定）。
-试图访问已锁定资源的其他进程将返回错误或进入休眠状态，直到资源解除锁定为止。当关闭文件时，将释放进程的所有锁定，即使进程仍然有打开的文件。当进程终止时，将释放进程保留的所有锁定。
-cmd 是指定要采取的操作的控制值，允许的值在中定义。 
-　　如下所示： 
-　　# define F_ULOCK 0 //解锁 
-　　# define F_LOCK 1 //互斥锁定区域 
-　　# define F_TLOCK 2 //测试互斥锁定区域  
-   # define F_TEST 3 //测试区域
-```
-
-
-
-#### 2\. 消息队列
-
-
-
-    Linux中的消息队列可以被描述成在内核地址空间的一个内部链表，每一个消息队列由一个IPC的标识号唯一的标识。Linux 为系统中所有的消息队列维护一个 msgque 链表，该链表中的每个指针指向一个 msgid\_ds 结构，该结构完整描述一个消息队列。
-
-
-
-    过程：创建消息缓冲区msgbuf放消息，ftok创建IPC通讯，mssget创建消息队列。向msgid代表的消息队列发送一个消息，即将发送的消息存储在msgbuf结构中，消息的大小由msgze指定,返回队列中的第一个消息；从msgid所指定的消息队列中读取一个消息，并把消息存储在msgbuf结构中
-
-
-
-```C
-(1)    消息缓冲区(msgbuf)
-//一个存放消息数据的模板
-struct msgbuf {
-long mtype;         /* 消息的类型，必须为正数 */
-char mtext[1];      /* 消息正文 */ 
-/*不仅能保存字符数组，而且能保存任何形式的任何数据。*/
-};
-struct my_msgbuf {
-long    mtype;          /* 消息类型 */
-long    request_id;     /* 请求识别号 */
-struct  client info;    /* 客户消息结构 */
-};
-消息总的长度不能超过8192字节，包括mtype域，它是4字节长。
-
-(2)    消息结构(msg)
-//内核把每一条消息存储在以msg结构为框架的队列中
-struct msg {
-    struct msg *msg_next;       /* 队列上的下一条消息 */
-    long  msg_type;              /*消息类型*/
-    char *msg_spot;                /* 消息正文的地址 */
-    short msg_ts;               /* 消息正文的大小 */
-};
-注意：msg_next是指向下一条消息的指针，它们在内核地址空间形成一个单链表。
-
-(3)    消息队列结构(msgid_ds)
-//当在系统中创建每一个消息队列时，内核创建、存储及维护这个结构的一个实例
-/* 在系统中的每一个消息队列对应一个msqid_ds 结构 */
-struct msqid_ds {
-struct ipc_perm msg_perm;
-struct msg *msg_first;       /* 队列上第一条消息，即链表头*/
-struct msg *msg_last;        /* 队列中的最后一条消息，即链表尾 */
-time_t msg_stime;            /* 发送给队列的最后一条消息的时间 */
-time_t msg_rtime;           /* 从消息队列接收到的最后一条消息的时间 */
-time_t msg_ctime;           /* 最后修改队列的时间*/
-ushort msg_cbytes;          /*队列上所有消息总的字节数 */
-ushort msg_qnum;             /*在当前队列上消息的个数 */
-ushort msg_qbytes;            /* 队列最大的字节数 */
-ushort msg_lspid;           /* 发送最后一条消息的进程的pid */
-ushort msg_lrpid;           /* 接收最后一条消息的进程的pid */
-};
-```
-
-
-
-System V消息队列是随内核持续的，只有在内核重启或显式地删除一个消息队列时，该项消息队列才会真正删除。因此系统中记录消息队列的数据结构（struct ipc\_ids msg\_ids）位于内核中，系统中的所有消息报队列都可以在结构msg\_ids中找到访问入口中。
-
-
-
-```C
-(4)System V消息队列API
-#include <sys/types.h>
-#include <sys/ipc.h>
-#include <sys/msg.h>
-1>    获取建立IPC通讯的ID值：
-key_t ftok( char * fname, int id );
-功能：系统建立IPC通讯（如消息队列、共享内存时）必须指定一个ID值。通常情况下，该id值通过ftok函数得到。
-     ftok函数用于生成一个唯一的键值（key），这个键值可以用于标识一个消息队列、共享内存段或信号量集。
-参数：fname就是你指定的文件名,必须是一个现存文件。
-     id是子序号。
-返回值：若成功则返回键，若出错则返回-1。
-
-2>    获得一个已存在的消息队列或创建一个特定的队列
-int msgget(key_t key,int msgflg);
-功能:取得一个与键值key相应的消息队列描述字,或若还没存在的队列，则创立之并返回这个消息队列描述字。
-返回值：若调用成功，返回消息队列描述字，否则返回-1。
-参数：
-key：是一个由ftok获得的键值（也可自行指定）
-msgflg:可以是以下值，以及它们的或值结果：
-IPC_CREAT：如果这个队列在内核中不存在，则创建它。
-IPC_EXCL：当与IPC_CREAT一起使用时，如果这个队列已存在，则创建失败。
-
-3>    读取消息
-int msgrcv(int msqid,struct msgbuf* msgp,int msgsz,long msgtyp,int msgflg);
-功能：从msgid所指定的消息队列中读取一个消息，并把消息存储在msgp指向的msgbuf结构中。
-返回值：若成功调用，返回读出消息报的实际字节数，否则返回-1.
-参数：
-    msgid:消息队列描述字。
-    msgp：消息返回后所存储的缓冲区的地址。
-    msgsz:指定msgbuf的mtext成员的长度(即消息内容的长度)。
-    msgtyp:为请求读取的消息类型。
-        msgtyp==0    返回队列中的第一个消息
-        msgtyp >0    返回队列中消息类型为msgtyp的第一个消息
-        msgtyp <0    返回队列中消息类型小于或等于msgtyp绝对值的消息，如果有                        若干个，则取类型值最小的消息
-    msgflg：读消息标志,可以是以下几个常值的或:
-    IPC_NOWAIT:若没有满足条件的消息，调用立即返回，且置全局变量errno=ENOMSG。
-    IPC_EXCEPT:与msgtyp>0配合使用，返回队列中第一个类型非msgtyp的消息。
-    IPC_NOERROR:若队列中满足条件的消息内容大于所请求的msgsz字节，则把该消息截断，截断部分将丢失。
-
-4>    发送消息
-int msgsnd(int msgid,struct msgbuf* buf,int msgsz,int msgflg);
-功能：向msgid代表的消息队列发送一个消息，即将发送的消息存储在msgp指向的msgbuf结构中，消息的大小由msgze指定。
-参数：
-    msgid:消息队列描述字。
-    buf:具体的消息
-    msgsz:指定msgbuf的mtext成员的长度(即消息内容的长度)。
-    msgflg:消息标志,同上面msgrcv函数，但有意义的是IPC_NOWAIT，指明在消息队列中没有足够空间容纳要发送的消息时，msgsnd()是否等待。
-
-5>    对消息队列执行特定操作（是对消息队列还是对消息队列中的消息）
-int msgctl(int msgid,int cmd,struct msgid_ds* buf)；
-功能：对由msgid标识的消息队列执行cmd所指定的操作：
-返回值：调用成功，则返回0，否则返回-1。
-参数：
-    msgid:消息队列描述字。
-    buf:参见cmd解释.
-    cmd:可以是以下值：
-    IPC_STAT:取此队列的msqid_ds结构，并将它存放在buf指向的结构中。
-    IPC_SET:按由buf指向结构中的值，设置与些队列相关结构中的下列四个字段：
-    msg_perm.uid、msg_perm.gid、msg_perm.mode、msg_perm.qbytes:
-    IPC_RMID:从系统中删除该消息队列以及仍在该队列中的所有数据。
-说明：
-此命令只能由下列两种进程执行：一种是其有效用户ID等于msg_perm.cuid或msg_perm .uid；
-                         另一种是具有超级用户特权的进程。
-只能超级用户才能增加msg_qbytes的值。    
-
-mqd_t mq;
-char buffer[MSG_SIZE];
-struct 
-msqid
-msgnd
-//receive
-msgrcv
-```
-
-
-
-#### 3\.共享内存
-
-
-
-1. 数据结构
-
-内核为每一个共享内存段\(存在于它的地址空间\)维护着一个特殊的数据结构shmid\_ds
-
-
-
-```C
-struct shmid_ds {
- struct ipc_perm shm_perm; /* 操作权限 */
- int shm_segsz; /* 段的大小(以字节为单位) */
- time_t shm_atime; /* 最后一个进程附加到该段的时间 */
- time_t shm_dtime; /* 最后一个进程离开该段的时间 */
- time_t shm_ctime; /* 最后一次修改这个结构的时间 */
- unsigned short shm_cpid; /*创建该段进程的 pid */
- unsigned short shm_lpid; /* 在该段上操作的最后一个进程的pid */
- short shm_nattch; /*当前附加到该段的进程的个数 */
- /* 下面是私有的 */
- unsigned short shm_npages; /*段的大小(以页为单位) */
- unsigned long *shm_pages; /* 指向frames -> SHMMAX的指针数组 */ 
-struct vm_area_struct *attaches; /* 对共享段的描述 */
- };
-```
-
-
-
-2. 共享内存的处理过程            
-
-    
-
-某个进程第一次访问共享虚拟内存时将产生缺页异常。这时，Linux 找出描述该内存的 vm\_area\_struct 结构，该结构中包含用来处理这种共享虚拟内存段的处理函数地址。共享内存缺页异常处理代码对shmid\_ds 的页表项表进行搜索，以便查看是否存在该共享虚拟内存的页表项。如果没有，系统将分配一个物理页并建立页表项，该页表项加入 shmid\_ds 结构的同时也添加到进程的页表中。这就意味着当下一个进程试图访问这页内存时出现缺页异常，共享内存的缺页异常处理代码则把新创建的物理页给这个进程。因此说，第一个进程对共享内存的存取引起创建新的物理页面，而其它进程对共享内存的存取引起把那个页加添加到它们的地址空间。
-
-
-
-当某个进程不再共享其虚拟内存时，利用系统调用将共享段从自己的虚拟地址区域中移去，并更新进程页表。当最后一个进程释放了共享段之后，系统将释放给共享段所分配的物理页。
-
-
-
-当共享的虚拟内存没有被锁定到物理内存时，共享内存也可能会被交换到交换区中。
-
-
-
-3\.    相应API
-
-
-
-共享内存段的识别号key, 
-
-
-
-```C
-1. 系统调用：shmget()
-  原型：int shmget ( key_t key, int size, int shmflg );                                             
-  返回：成功，则返回共享内存段的识别号, 失败返回-1                                                             
-  类似于信号量和消息队列的系统调用，在此不进一步赘述。
-
-2. 系统调用：shmat()
-   原型： int shmat ( int shmid, char *shmaddr, int shmflg);
-   返回：成功，则返回附加到进程的那个段的地址，失败返回-1。
-其中shmid是由shmget()调用返回的共享内存段识别号，shmaddr是你希望共享段附加的地址，shmflag允许你规定希望所附加的段为只读(利用SHM_RDONLY)以代替读写。通常，并不需要规定你自己的shmaddr，可以用传递参数值零使得系统为你取得一个地址。
-这个调用可能是最简单的，下面看一个例子，把一个有效的识别号传递给一个段，然后返回这个段被附加到内存的内存地址。
-char *attach_segment( int shmid ){
-        return(shmat(shmid, 0, 0));
-}
-一旦一个段适当地被附加，并且一个进程有指向那个段起始地址的一个指针，那么，对那个段的读写就变得相当容易。
-
-3. 系统调用： shmctl()
-  原型： int shmctl ( int shmqid, int cmd, struct shmid_ds *buf );
-  返回：成功为 0 ，失败 为-1
-功能：这个特殊的调用和msgctl()调用几乎相同，因此，这里不进行详细的讨论。
-cmd有效命令的值是：
-IPC_STAT ：检索一个共享段的shmid_ds结构，把它存到buf参数的地址中。
-IPC_SET ：对一个共享段来说，从buf 参数中取值设置shmid_ds结构的
-            ipc_perm域的值。
-IPC_RMID ：把一个段标记为删除 
-IPC_RMID 命令实际上不从内核删除一个段，而是仅仅把这个段标记为删除，实际的删除发生在最后一个进程离开这个共享段时。
-当一个进程不再需要共享内存段时，它将调用shmdt()系统调用取消这个段，但是，这并不是从内核真正地删除这个段，而是把相关shmid_ds结构的 shm_nattch域的值减1，当这个值为0时，内核才从物理上删除这个共享段。
-
-4.系统调用:shmdt()
-原型：int shmdt(void* addr);
-    返回值：若成功则返回0,否则返回-1
-    参数：addr是以前调用shmat时返回的值。
-    功能：当对共享存储段的操作已结束时，则调用此数脱接该段。
-注意的是，调用此函数并不从系统中删除其标识符以及其数据结构。该标识符仍然存在，直至某个进程（一般是服务器进程）调用shmctl(带命令IPC_RMID).
-```
-
-
-
-#### 4\. 信号量
-
-
-
-```C
-#include <sys/types.h>
-#include <sys/ipc.h>
-#include <sys/sem.h>
-# System V Semaphore GET
-int semget(key_t key, int nsems, int semflg)
-创建或者打开一个信号量集合,成功返回semid，失败返回-1
-# Control
-int semctl(int semid, int semnum, int cmd, union semun arg)
-设置信号量的值、获取信号量集的信息或删除信号量集
-semnum:对某一个信号量集合中单个信号量的序号，置0表示忽视该参数
-cmd:指定了相关控制操作，常见参数如下：
-    IPC_RMID：立即删除信号量集以及相关关联数据结构，所有因为调用semop而等待这个信号量集的进程都会被立即唤醒，semop会报EIDRM错误，该参数忽略arg参数和semnum参数
-union semun {
-               int              val;    /* Value for SETVAL */
-               struct semid_ds *buf;    /* Buffer for IPC_STAT, IPC_SET */
-               unsigned short  *array;  /* Array for GETALL, SETALL */
-               struct seminfo  *__buf;  /* Buffer for IPC_INFO*/
-           };
-# Operation
-int semop(int semid, struct sembuf *sops, unsigned nsops);
-进行一个或者多个原子操作， P 操作(等待或减一)和 V 操作(发送或加一)
-struct sembuf
-{
-     unsigned short sem_num;  /* semaphore number(信号集中单个信号量的序号) */
-     short          sem_op;   /*
-1.    sem_op 大于0：调用进程具备在信号量上面的写权限。将sem_op 值加到信号量上面，等待减少该信号量值得进程会被唤醒
-2.    sem_op 等于0：调用进程具备在信号量上面的读权限。调用进程检查信号量值是否为0，如果等于0，操作立即结束，否则阻塞到等于0为止
-3.    sem_op 小于0：调用进程具备在信号量上面的写权限。当前信号量的值减去sem_op 大于等于0，操作结束，否则阻塞进程知道操作之后不会把信号量变为负值为止*/
-     short          sem_flg;  /* operation flags */
-//指定IPC_NOWAIT ，本来semop() 会阻塞，但是指定了这个标志之后，会返回EAGAIN错误
-sem_op 调用阻塞被唤醒的一般情况：
-1.    等待的信号量发生了变化
-2.    一个信号中断了sem_op() ，返回EINTR错误
-3.    信号量被删除，返回EIDRM错误
-
-}
-```
-
-
-
-## 七、vi和vim
-
-
-
-##### 命令模式
-
-
-
-```Bash
-设置行号
-:set nu
-:set nonu
-
-撤销操作
-u 撤销，可以撤销到最近的一次保存的状态
-：e! 恢复到文档的初始状态
-
-删除字符
-x 键或 del 键
-7x 删掉光标后面的 7 个字符
-dw 删除一个词（剪切）
-dd 删除行（剪切）
-4dd 删除 4 行（剪切）
-
-复制操作
-yw 复制一个词
-yy 复制光标所在的行
-4yy 复制光标所在行的下面 4 行
-
-粘贴操作
-p 粘贴在光标所在的下一行（如果粘贴词的话，粘贴在光标字符的后面）
-
-光标快速定位
-G 光标到达行末
-7G 快速找到第 7 行
-/adm 简单搜索，快速定位光标到光标后的第一个 adm 单词的位置，当到行末没有的话，返回从头开始查找
-
-：7，12 s/:/? 把第 7-12 行中每一行的第一个：改成？ 
-：7，12 s/:/?/g 把第 7-12 行中的：全部改成？
-
-进入和退出输入模式
-i 在光标之前输入文字
-ESC 退出
-a 在光标之后输入文字
-A 在行尾插入文字
-o 光标下面插入 1 行空行
-O 在光标上面插入 1 行空行
-```
-
-
-
-## 八、文件
-
-
-
-文本文件是存储在文件系统的纯文本数据，在Linux系统中，文本文件和二进制文件无任何实际的区别:使用换行符而非回车
-
-
-
-文本文件有多种编码，包括ASCII和UTF\-8，
-
-
-
-### Linux中的文件
-
-
-
-Linux的文件目录下只存储 `文件名` 与 一个指向 `inode` 的指针。 
-
-
-
-`inode` （Index Node）是linux一个数据结构，代替了传统系统的FCB。所有`inode` 统统存放在磁盘中名为 `inode` 表的地方，有一个唯一的编号作为其在表中的索引。
-
-
-
-`inode` 存储了文件的所有元数据，包括文件大小、类型（例如普通文件、目录、字符设备等）、权限、所有者、时间戳、链接数（多少文件名指向该inode）以及文件数据地址。每个 `inode` 包含12个指向文件实际数据块的指针，一个一级间接指针、一个二级间接指针、一个三级间接指针，使小文件能快速被访问而大文件可以通过多级索引来管理。
-
-
-
-每个`inode` 节点一般为128B或256B，在格式化时就给定，一般1或2KB设置一个inode，创建文件时再分配。当`inode` 的链接数为0且没有任何程序正在使用，该`inode` 被重新标记为可用，且回收其占用的所有数据块。
-
-
-
-文件描述符（File Descriptor）是一个0\~255的整数，是操作系统内核为每个\*\*进程\*\*维护的一个表中的索引，当打开一个文件或设备时，讷河返回一个文件描述符，程序通过它来访问文件而非直接使用文件名。
-
-
-
-### 文件类型
-
-
-
-- 目录
-
-- 普通文件
-
-- 字符设备文件：用于处理字符流数据，如tty、console、打印机等。
-
-- 块设备文件：以固定大小的数据块为单位进行读写操作，这类设备包括磁盘分区、光盘驱动，支持随机访问且有缓存。
-
-- 符号链接
-
-- 管道
-
-- 套接字
-
-    
-
-### 文件流
-
-
-
-**open系统调用（linux）**
-
-
-
-**需要包含头文件：** 
-
-\#include\<sys/types\.h\> 
-
-\#include\<sys/stat\.h\> 
-
-\#include\<fcntl\.h\>
-
-
-
-**函数原型：** 
-
-int open\( const char \* pathname, int oflags\); 
-
-int open\( const char \* pathname,int oflags, mode\_t mode\);
-
-
-
-**mode**仅当创建新文件时才使用，用于指定文件的访问权限。 
-
-**pathname** 是待打开/创建文件的路径名； 
-
-**oflags**用于指定文件的打开/创建模式，这个参数可由以下常量（定义于 fcntl\.h）通过逻辑或构成。 
-
-O\_RDONLY 只读模式 
-
-O\_WRONLY 只写模式 
-
-O\_RDWR 读写模式 
-
-以上三者是互斥的，即不可以同时使用。  
-
-打开/创建文件时，至少得使用上述三个常量中的一个。以下常量是选用的：  
-
-O\_APPEND 每次写操作都写入文件的末尾  
-
-O\_CREAT 如果指定文件不存在，则创建这个文件  
-
-O\_EXCL 如果要创建的文件已存在，则返回 \-1，并且修改 errno 的值  
-
-O\_TRUNC 如果文件存在，并且以只写/读写方式打开，则清空文件全部内容  
-
-O\_NOCTTY 如果路径名指向终端设备，不要把这个设备用作控制终端。  
-
-O\_NONBLOCK 如果路径名指向 FIFO/块文件/字符文件，则把文件的打开和后继 I/O设置为非阻塞模式（nonblocking mode）。  
-
-//以下用于同步输入输出  
-
-O\_DSYNC 等待物理 I/O 结束后再 write。在不影响读取新写入的数据的前提下，不等待文件属性更新。  
-
-O\_RSYNC read 等待所有写入同一区域的写操作完成后再进行  
-
-O\_SYNC 等待物理 I/O 结束后再 write，包括更新文件属性的 I/O
-
-
-
-当你使用带有O\_CREAT标志的open调用来创建文件时，你必须使用有3个参数格式的open调用。第三个参数mode是几个标志按位或后得到的，  
-
-这些标志在头文件sys/stat\.h中定义，如下所示：  
-
-S\_IRUSR: 读权限，文件属主  
-
-S\_IWUSR: 写权限，文件属主  
-
-S\_IXUSR: 执行权限，文件属主  
-
-S\_IRGRP: 读权限，文件所属组  
-
-S\_IWGRP: 写权限，文件所属组  
-
-S\_IXGRP: 执行权限，文件所属组  
-
-S\_IROTH: 读权限，其它用户  
-
-S\_IWOTH: 写权限，其它用户  
-
-S\_IXOTH: 执行权限，其它用户
-
-
-
-**返回值**：成功则返回文件描述符（整型变量0\~255），否则返回 \-1。 由open 返回的文件描述符一定是该进程尚未使用的最小描述符。
-
-
-
-**错误代码**：（均已E开头，将其去掉就是有关于错误的方面的单词或单词的缩写） 
-
-
-
-```Plain Text
-EEXIST 参数pathname 所指的文件已存在，却使用了O_CREAT和O_EXCL旗标。  
-EACCESS 参数pathname所指的文件不符合所要求测试的权限。  
-EROFS 欲测试写入权限的文件存在于只读文件系统内。  
-EFAULT 参数pathname指针超出可存取内存空间。  
-EINVAL 参数mode 不正确。  
-ENAMETOOLONG 参数pathname太长。  
-ENOTDIR 参数pathname不是目录。  
-ENOMEM 核心内存不足。  
-ELOOP 参数pathname有过多符号连接问题。  
-EIO I/O 存取错误。  
-ssize_t write(int fd, const void *buf, size_t count); 
-```
-
-
-
-**参数**：  
-
-fd：要进行写操作的文件描述词。  
-
-buf：需要输出的缓冲区  
-
-count：最大输出字节计数  
-
-**返回值**：成功返回写入的字节数，出错返回\-1并设置errno  
-
-ssize\_t read\(int fd, void \*buf, size\_t count\);  
-
-**参数**：  
-
-buf：需要读取的缓冲区  
-
-count：最大读取字节计数  
-
-返回值：成功返回读取的字节数，出错返回\-1并设置errno，如果在调read之前已到达文件末尾，则这次read返回0 。
-
-
-
-**2、fopen库函数**
-
-
-
-**头文件**：\<stdio\.h\>  
-
-**函数原型**：FILE \* fopen\(const char \* path, const char \* mode\);  
-
-path字符串包含欲打开的文件路径及文件名，参数mode字符串则代表着流形态。  
-
-mode有下列几种形态字符串:  
-
-“r"或"rb” 以只读方式打开文件，该文件必须存在。  
-
-“w"或"wb” 以写方式打开文件，并把文件长度截短为零。  
-
-“a"或"ab” 以写方式打开文件，新内容追加在文件尾。  
-
-"r\+"或"rb\+“或"r\+b” 以更新方式打开（读和写）  
-
-"w\+"或"wb\+“或"w\+b” 以更新方式打开,并把文件长度截短为零。  
-
-"a\+"或"ab\+“或"a\+b” 以更新方式打开，新内容追加在文件尾。  
-
-字母b表示文件时一个二进制文件而不是文本文件。（linux下不区分二进制文件和文本文件）  
-
-**返回值**：文件顺利打开后，指向该流的文件指针就会被返回。如果文件打开失败则返回NULL，并把错误代码存在errno 中。
-
-
-
-fread是一个函数。从一个文件流中读数据，最多读取count个元素，每个元素size字节，如果调用成功返回实际读取到的元素个数，如果不成功或读到文件末尾返回 0。  
-
-**函数原型**：size\_t fread \( void \*buffer, size\_t size, size\_t count, FILE \*stream\) ;  
-
-**参 数**：  
-
-buffer：用于接收数据的内存地址  
-
-size：要读写的字节数，单位是字节  
-
-count：要进行读写多少个size字节的数据项,每个元素是size字节\.  
-
-stream：输入流  
-
-**返回值**：实际读取的元素个数\.如果返回值与count不相同,则可能文件结尾或发生错误，从ferror和feof获取错误信息或检测是否到达文件结尾\.
-
-
-
-fwrite：向文件写入一个数据块  
-
-**函数原型**：size\_t fwrite\(const void\* buffer, size\_t size, size\_t count, FILE\* stream\);  
-
-**参数**：  
-
-buffer：是一个指针，对fwrite来说，是要获取数据的地址；  
-
-size：要写入内容的单字节数；  
-
-count:要进行写入size字节的数据项的个数；  
-
-stream:目标文件指针；  
-
-**返回值**：返回实际写入的数据块数目
-
-
-
-fflush：把文件流里的所有为写出数据立刻写出。  
-
-**函数原型**：int fflush\(FILE \*stream\);
-
-
-
-fseek：是lseek系统调用对应的文件流函数。它在文件流里为下一次读写操作指定位置。  
-
-函数原型：int fseek\(FILE \*stream, long offset, int fromwhere\);  
-
-参数stream为文件指针  
-
-参数offset为偏移量，正数表示正向偏移，负数表示负向偏移  
-
-参数fromwhere设定从文件的哪里开始偏移,可能取值为：SEEK\_CUR、 SEEK\_END 或 SEEK\_SET  
-
-SEEK\_SET： 文件开头  
-
-SEEK\_CUR： 当前位置  
-
-SEEK\_END： 文件结尾  
-
-其中SEEK\_SET,SEEK\_CUR和SEEK\_END依次为0，1和2\.  
-
-**返回值**：如果执行成功，stream将指向以fromwhere为基准，偏移offset（指针偏移量）个字节的位置，函数返回0。如果执行失败\(比如offset超过文件自身大小\)，则不改变stream指向的位置，函数返回一个非0值。
-
-
-
-### 硬链接和软链接
-
-
-
-Linux具有为一个文件起多个名字的功能，称为链接。
-
-
-
-被链接的文件可以存放在相同的目录下，但是必须有不同的文件名，而不用在硬盘上为同样的数据重复备份。另外，被链接的文件也可以有相同的文件名，但是存放在不同的目录下，这样只要对一个目录下的该文件进行修改，就可以完成对所有目录下同名链接文件的修改。
-
-
-
-对于某个文件的各链接文件，我们可以给它们指定不同的存取权限，以控制对信息的共享和增强安全性。
-
-
-
-文件链接有两种形式，即硬链接和符号链接。
-
-
-
-#### 软链接
-
-
-
-1. 软链接，又叫符号链接，就是文件的内容是以文件B路径的形式存在。类似于Windows操作系统中的快捷方式
-
-2. 软链接可以 跨文件系统 ，硬链接不可以
-
-3. 软链接可以对一个不存在的文件名进行链接
-
-4. 软链接可以对目录进行链接
-
-    
-
-#### 硬链接
-
-
-
-硬链接是Unix系统，允许多个文件名指向同一个 `inode` 。
-
-
-
-1. 硬链接，以文件副本的形式存在。但不占用实际空间。
-
-2. 对文件内容修改会影响到所有文件名，但删除 `rm` 文件不影响另一个文件名的访问
-
-3. 硬链接只有在同一个文件系统中才能创建
-
-4. 不允许给目录创建硬链接，因为文件系统会为目录项创建 `./` `../` 两个硬链接，所以任何目录的链接数等于 2 \+ 子目录总数
-
-    
-
-```Bash
-ln 为文件创建链接,默认的链接类型是硬链接。如果要创建符号链接必须使用"-s"选项。
-# 创建一个与 abc.txt 共享相同的 i 节点的硬链接文件
-ln abc.txt hardlink.txt 
-# 创建指向 abc.txt 文件软链接文件
-ln -s abc.txt softlink.txt  
-```
-
-
-
-### 文件信息
-
-
-
-文件分为inode里 属性 i节点中12个指针指向数据块
-
-
-
-\<sys/stat\.h\>库函数
-
-
-
-```C
-//成功返回0，失败返回-1 errno， statbuf传出参数
-int stat(const char *pathname, struct stat *statbuf);
-
-//专门用于获取符号链接（symlink）文件的信息
-int lstat(const char *pathname, struct stat *statbuf);
-
-
-struct stat {
-    dev_t st_dev;         // 文件所在设备的设备号
-    ino_t st_ino;         // 文件的i-node号
-    mode_t st_mode;       // 文件权限和文件类型
-    nlink_t st_nlink;     // 链接数
-    uid_t st_uid;         // 文件所有者的用户ID
-    gid_t st_gid;         // 文件所属组的组ID
-    off_t st_size;        // 文件大小（字节数）
-    blksize_t st_blksize; // 文件系统I/O操作的块大小
-    blkcnt_t st_blocks;   // 文件占用的块数
-    time_t st_atime;      // 最后访问时间
-    time_t st_mtime;      // 最后修改时间
-    time_t st_ctime;      // 最后状态改变时间
-};
-```
-
-
-
-### 文件权限
-
-
-
-表示为三组权限位：用户权限、组权限和其他权限。每个权限位可以设置为读取（r）、写入（w）和执行（x）的组合。
-
-
-
-按位与（bitwise AND）通常用于检查某个用户是否具有特定权限。 
-
-
-
-权限位是一个包含用户、组和其他权限的三位二进制数字。
-
-
-
-例子：
-
-
-
-```C++
-if (权限位 & 4) {    // 用户具有读取权限}
-}
-```
-
-
-
-\!\[微信截图\_20240417162320\.png\]\(D:\\study\\linux\\5\\微信截图\_20240417162320\.png\)
-
-
-
-指令
-
-
-
-```Bash
-chmod [选项] 模式 文件    # change mode
-# 模式 
-数字模式：rwxrwxrwx对应二进制111000111，每三个转换成十进制：755
-符号模式：使用符号来表示权限的增加或减少
-        +（增加权限）、-（减少权限）和 =（设置权限）
-        u+x 表示给所有者添加执行权限
-```
-
-
-
-### linux中的文件目录
-
-
+### 磁盘布局：FHS 与 `/etc` 下真正会改的文件
 
 ```Plain Text
 /
-├── bin/          # Binaries (二进制文件)：存放最常用的用户命令，如 ls, cp, mv, cat 等, 一般无需修改。
-├── boot/         # 启动文件：存放启动 Linux 时使用的核心文件，包括 GRUB 引导加载程序、内核镜像文件 (vmlinuz) 等。
-├── dev/          # Device (设备)：存放 Linux 的外部设备文件，访问设备如同访问文件 /dev/null (空设备)。
-│   ├── sda1      # 硬盘分区
-│   ├── tty1      # 字符设备“c”，
-│   └── null      # 空设备，用于
-├── etc/          # Etcetera / Config：包括网络设置、用户账户、启动脚本和服务配置。
-│   ├── passwd    # 用户账户信息文件，包含用户名、UID、GID、主目录、shell 等（不含密码）。
-│   ├── shadow    # 用户密码文件，存放加密后的用户密码，只有 root 用户可读。
-│   ├── group     # 用户组信息文件。
-│   ├── sudoers   # sudo 命令的配置文件，指定哪些用户或组可以以 root 权限执行命令。
-│   ├── fstab     # 文件系统表，定义系统启动时自动挂载的文件系统。
-│   ├── hosts     # 主机名与 IP 地址的映射文件。
-│   ├── resolv.conf # DNS 域名解析配置文件。
-│   └── apt/      # (Debian/Ubuntu) APT 包管理器的配置文件目录。
-│       └── sources.list # 软件源列表文件。
-├── home/         # 用户主目录：普通用户的主目录，通常以用户账号命名，如 /home/alice。
-│   └── alice/    # 示例用户主目录
-│       ├── .bashrc   # 用户 Bash shell 配置文件。
-│       ├── .profile  # 用户环境变量配置文件。
-│       └── .ssh/     # 用户 SSH 客户端配置文件和密钥存储目录。
-├── lib/          # Library (库)：存放系统最基本的动态连接共享库，类似于 Windows 的 DLL 文件，普通用户不要动。
-├── lost+found/   # 丢失+找回：当系统非法关机或发生文件系统错误后，存放一些恢复的文件，通常为空。
-├── media/        # 媒体挂载点：Linux 系统自动识别并挂载 U 盘、光驱等可移动设备，不需要管理权限，是用户访问的便捷入口。
-├── mnt/          # 临时挂载点：系统管理员手动连接，临时挂载其他文件系统（如网络远程文件系统、备份磁盘）的目录。
-├── opt/          # optional (可选)：给主机额外安装第三方大型软件（如 ORACLE 数据库、Web 服务器）的目录。
-├── proc/         # Processes (进程)：虚拟文件系统，映射当前内核正在运行的进程的接口，是系统内存的映射，方便监控调试。
-├── run/          # 可写的，供正在运行的进程使用，用于通信、状态跟踪或存储短期文件如进程ID、套接字。
-├── root/         # 系统管理员主目录：超级权限用户（root）的主目录。
-├── sbin/         # System Binaries：存放系统管理员使用的命令与程序，如 mount, fsck, ifconfig, shutdown。
-├── selinux/      # Selinux 相关文件：Redhat/CentOS 特有，存放 SELinux 安全机制相关文件。
-├── srv/          # Service 服务数据：存储系统提供服务的数据，如 FTP 服务、网络服务器的数据，可以换成使用var。
-├── sys/          # sysfs 文件系统：Linux 2.6 内核引入，反映内核设备树，集成进程、设备、伪终端信息，可写入调整内核。
-├── tmp/          # temporary (临时)：存放一些临时文件，系统重启时通常会被清空。
-└── usr/          # Unix System Resources：用户应用程序和文件存放地，类似于 Windows 的 Program Files，建议只读。
-    ├── bin/      # 系统用户使用的应用程序，包括大多数编译器的可执行文件（如 gcc, g++）。
-    ├── sbin/     # 超级用户使用的比较高级的管理程序和系统守护程序。
-    ├── local/    # 本地安装的软件：存放用户或管理员本地编译安装的软件，不随系统升级而改变。
-    │   ├── bin/  # 本地安装软件的二进制可执行文件。
-    │   ├── lib/  # 本地安装软件的库文件。
-    │   └── src/  # 本地安装软件的源代码。
-    ├── share/    # 共享数据：存放所有用户共享的只读数据，如文档、man 手册、图标等。
-    ├── lib/      # 库文件：存放系统和应用程序的库文件。
-    └── include/  # 头文件：存放 C/C++ 语言的头文件，用于编译程序。
-└── var/          # variable (变量)：存放经常被修改的目录，包括各种日志文件、队列、缓存等。
-    ├── lib/      # 有时候存在/usr/local的程序会在这里
-    ├── log/      # 日志文件：存放系统和应用程序的各种日志文件，如 /var/log/messages, /var/log/syslog。
-    ├── www/      # Web 服务器根目录：存放 Web 服务器（如 Apache, Nginx）的网站文件。
-    ├── mail/     # 用户邮箱：存放用户接收的邮件。
-    └── spool/    # 缓冲池：存放等待处理的数据，如打印队列、cron 任务等。
+├── bin -> usr/bin        # 用户命令（现代发行版多为指向 /usr 的软链接）
+├── boot/                 # 内核与引导程序
+├── dev/                  # 设备文件，/dev/null、/dev/sda1
+├── etc/                  # 配置
+├── home/                 # 普通用户主目录
+├── lib -> usr/lib        # 共享库
+├── mnt/  media/          # 手动挂载点 / 可移动设备挂载点
+├── opt/                  # 第三方大型软件
+├── proc/  sys/           # 内核暴露的虚拟文件系统
+├── root/                 # root 的主目录
+├── sbin -> usr/sbin      # 管理类命令
+├── tmp/                  # 临时文件，重启清空
+├── usr/                  # 系统级程序与库，local/ 下是手工安装的
+└── var/                  # 会增长的数据：日志、队列、缓存
 ```
 
+`/etc` 下真正需要记住的文件不多：
 
+| 文件 | 作用 |
+|---|---|
+| `/etc/passwd` | 用户账号：用户名、UID、GID、主目录、登录 shell |
+| `/etc/shadow` | 口令散列，只有 root 可读 |
+| `/etc/group` | 组与组成员 |
+| `/etc/sudoers` | sudo 授权规则，只能通过 `visudo` 改 |
+| `/etc/fstab` | 开机自动挂载的文件系统 |
+| `/etc/hosts` | 本地域名映射，排查 DNS 前先看它 |
+| `/etc/resolv.conf` | DNS 服务器 |
+| `/etc/ssh/sshd_config` | SSH 服务端配置 |
 
-### 文件系统类型
-
-
-
-> 通过 `man 5 fs` 可以查看多种文件系统的区别
-> 
-> 
-
-
-
-- Ext3（Extended File System）提供日志功能（日记、顺序、）
-
-    
-
-- XFS 适用于大型文件和大容量存储
-
-    
-
-- JFS 日志文件系统，具有快速恢复能力和高性能。
-
-    
-
-## 九、脚本文件
-
-
-
-[Shell 基本运算符 \| 菜鸟教程 \(runoob\.com\)](https://www.runoob.com/linux/linux-shell-basic-operators.html)2022102157
-
-
-
-### 变量
-
-
+`/proc` 是排查用的只读视图：`/proc/cpuinfo`、`/proc/meminfo`、`/proc/<pid>/`（进程的 fd、环境变量、内存映射都在这里）。
 
 ```Bash
-//大写字母常量
-//等号两侧不打空格
-_var="123"
-_var="abc" 重新定义
-readonly _var 只读，之后不能再修改
-unset _var 删除变量
-
-//使用变量前加$
-//加花括号是为了帮助解释器识别变量的边界,属于变量替换
-echo ${name}
-
-字符串：
-string="Hello,World!"/'Hello'
-“$string”
-
-整数：declare -i inte=42
-
-数组(可以装不同类型)：
-array=(1 2 3 4 5)
-declare -A associative_array
-associative_array["age"]=30
-
-特殊变量：
-脚本名称$0  脚本参数$1 $n 脚本参数内容字符串$* 参数内容多个字符串$@
-参数数量$# 
-上一指令返回值$? 当前进程pid$$ 最后运行进程pid $!
-
-其他$:
-命令替换：返回括号中命令的结果 $() 和 ``
-
-变量替换：精准界定 ${}
-取路径、文件名、后缀:
-    \#是去掉左边(在键盘上 # 在 $ 之左边)
-
-    %是去掉右边(在键盘上 % 在 $ 之右边)
-
-    单一符号是最小匹配;两个符号是最大匹配
-
-    *是用来匹配不要的字符，也就是想要去掉的那部分
-${file#*/}
-
-间接扩展：使用一个变量的值作为另一个变量的名称
-${!variable}
+hostnamectl                  # 发行版与内核版本
+cat /proc/version            # 内核版本
+nproc                        # CPU 核数，判断 load 是否偏高时要一起看
 ```
 
+---
 
+## 二、输入输出、管道与退出码
 
-### 控制语句
+这一章是后面所有"命令组合"的前提。不先理解 fd 与重定向，第一章的命令就只能一条条敲，排障时也无法把日志留下。
 
+### 文件描述符与标准输入输出
 
+Linux 的原则是"一切皆文件"，进程访问文件、管道、设备都通过**文件描述符**这个非负整数。每个进程有自己的 fd 表，三个编号由约定固定：
 
-[Bash for循环 \- Bash Shell教程 \(yiibai\.com\)](https://www.yiibai.com/bash/bash-for-loop.html)
+| fd | 名称 | 默认指向 |
+|---|---|---|
+| 0 | 标准输入 stdin | 终端键盘 |
+| 1 | 标准输出 stdout | 终端 |
+| 2 | 标准错误 stderr | 终端 |
 
+关键点是 **stdout 和 stderr 是两个独立的流**。命令正常产生的数据走 1，报错和警告走 2，所以"为什么报错没进日志文件"几乎总是只重定向了 1 而没有带上 2。
 
+fd 的上限不是固定的 0~255，而是由 `ulimit -n`（单进程限制）和 `fs.nr_open`（内核上限）决定：
 
 ```Bash
-if [ $var -gt $var2 ]; then
-if (( > )); then
-else if
-else
-fi
-
-for x in list; do
-for ((i;i<n;i++)) 
-do
-    echo $i
-    continue
-    break
-done
-//in列表种类
-字符串:$string    空白作为分隔符
-      "$STRING"  换行作为分隔符
-整数范围：{1..10} {1..10..2}
-数组：“${arr[@]}”
-
-while read line; then
-do
-done>
-
-for line in read
+ulimit -n                    # 当前会话的单进程 fd 上限
+cat /proc/sys/fs/nr_open     # 系统级上限
+ls -l /proc/$$/fd            # 看当前 shell 打开了哪些 fd
 ```
 
+程序还可以判断"我的输出有没有被重定向"，这也是很多工具在管道里自动关闭彩色输出的原理——`isatty()` 返回 0 就说明 stdout 已经不是一个终端：
 
+```C
+#include <unistd.h>
 
-### 算术运算
+if (!isatty(fileno(stdout))) {
+    fprintf(stderr, "stdout is redirected\n");
+}
+```
 
-
+### 重定向：`2>&1` 的顺序陷阱
 
 ```Bash
-//执行计算公式，两个()！等价[] 运算式内变量不加$
-delta=$((运算式))
-delta=$[ condition ]
-//echo将文本传给bc处理计算
-root1=$(echo "scale=0; (-$b + sqrt($delta)) / (2 *$a)" | bc)
+cmd > out.txt          # stdout 覆盖写入，stderr 仍打印在终端
+cmd >> out.txt         # stdout 追加
+cmd 2> err.txt         # 只把 stderr 写文件
+cmd 2>> err.txt        # 追加 stderr
+cmd &> all.txt         # stdout 和 stderr 都写同一文件（bash 简写）
+cmd > all.txt 2>&1     # 等价写法，也是唯一能在 sh 里通用的形式
+cmd 2>&1 > all.txt     # 陷阱：stderr 去了终端，stdout 才进文件
 ```
 
+最后一行值得单独解释，因为重定向是**从左到右依次生效**的：`2>&1` 先把 stderr 复制到"当前 stdout"，而此刻的 stdout 还是终端；随后 `> all.txt` 只把 stdout 换成文件。结果 stderr 留在终端。所以顺序必须是"先重定向 stdout，再让 stderr 跟随"。
 
-
-## 十、硬件管理
-
-
-
-磁盘由一组盘组组成，包括多张\*\*盘片\*\*，分正反两面。
-
-
-
-每个盘面配有一个读写磁头，磁头被固定在移动壁上同时跨磁道移动（钕磁铁电机，可达每秒20次），而移动磁头只能以串行方式读写（即读的方向是磁盘旋转的反方向）。写入是通过改变微小磁性区域（100nm2）的磁化方向为上或下，相邻磁极改变为1、不变为0（类似曼彻斯特编码）。
-
-
-
-一个盘面可划分若干\*\*磁道\*\*，由外向里顺序从0开始编号，各个盘面同一垂直线上的磁道组成了一个\*\*柱面\*\*，此时盘道号即为柱面号。值得一提的是，外盘线速度大，被称为高速读写区，一般分给C盘系统盘使用。
-
-
-
-每条磁道又分为若干\*\*扇区\*\*，各扇区之间留有空隙，沿与磁盘旋转相反的方向给扇区编号。每个扇区头为扇区头标、地址、数据（通常4KB）、纠错码。
-
-
-
-格式化
-
-
-
-硬盘和软盘区别在于
-
-
-
-固态硬盘SSD内部无活动部件，使用浮栅晶体管存储电子，价格贵，恢复差。
-
-
-
-### 硬盘磁盘
-
-
-
-在 linux 下，计算机所有设备是以文件的形式存在的。
-
-
+丢弃不需要的输出：
 
 ```Bash
-1、lspci 列出所有的 PCI 设备
-2、fdisk -l 查看存储设备信息
-3、查看/proc 目录下相应的文件来查看一些设备信息
-cat /proc/cpuinfo 查看 CPU 
+cmd 2> /dev/null                 # 只丢掉报错
+cmd > /dev/null 2>&1             # 什么都不输出，只看退出码
+cmd > /dev/null 2>&1 &           # 静默后台运行
 ```
 
+**`2> &1` 是错的**，`&1` 中间不能有空格，bash 会直接报 `syntax error near unexpected token '&'`。
 
-
-#### 磁盘文件系统
-
-
-
-##### IDE磁盘
-
-
-
-文件名为：/dev/hdxx
-
-
-
-编号规则：以 hd 加编号组成，1 个 IDE 通道可以连接 2 块硬盘，第一个硬盘叫master，第二个叫slave，/dev/hdbx
-
-
-
-linux 的编号如下：
-
-第一通道上的第一块为 hda
-
-第一通道上的第二块为 hdb
-
-第二通道上的第一块为 hdc
-
-第二通道上的第二块为 hdd
-
-其他的依次类推
-
-
-
-##### SCSI/SATA/USB磁盘
-
-
-
-文件名为：/dev/sdxx
-
-
-
-编号规则：以 sd 加编号组成，1 个 scsi 通道可以连接 15 块硬盘（其中 1 个连接SCSI 卡）
-
-
-
-第一通道上的第一块为 sda
-
-第一通道上的第二块为 sab
-
-
-
-##### 分区编号
-
-在硬盘编号后面加上数字编号来表示第几块硬盘上的第几个分区
-
-1—4 为主分区（扩展分区的编号）
-
-5 以后为逻辑磁盘的编号
-
-
-
-```Plain Text
-/dev/hda      #表示第一个IDE硬盘
-/dev/hda1     #表示第一块IDE硬盘的第一个主分区
-/dev/hda2     #表示第一块IDE硬盘的扩展分区（或第二个主分区）
-/dev/hda5     #表示第一块IDE硬盘的第一个逻辑分区
-/dev/hda8     #表示第一块IDE硬盘的第四个逻辑分区
-/dev/hdb      #表示第二个IDE硬盘
-/dev/sda      #表示第一个SCSI硬盘
-/dev/sda1     #表示第一个SCSI硬盘的第一个主分区
-/dev/sdd3     #表示第四个SCSI硬盘的第三个主分区
-```
-
-
-
-
-
-
+从文件读入、把多行内容写进命令：
 
 ```Bash
-fdisk 磁盘管理命令
-fdisk -l 显示磁盘分区信息的信息
-fdisk /dev/sdb 对第二块 scsi 硬盘进行分区操作
-
-
-mkfs 命令对磁盘进行文件系统的格式化
+mysql -u root -p < init.sql        # 输入重定向
+ssh host <<'EOF'                   # here-doc，引号包住 EOF 可阻止变量展开
+cd /opt/app && git pull
+EOF
+grep 'error' <<< "$LOG"            # here-string
 ```
 
+### 管道、`tee` 与退出码
 
-
-### 备份
-
-
-
-`cpio`用来建立、还原备份档的工具程序
-
-
-
-## 其他知识
-
-
-
-#### 1\.声音文件\.wav
-
-
-
-由windows开发，是无压缩的原始音频文件，遵照RIFF\(Resource Interchange File Format\)文件规范，便于学习。
-
-
-
-通常使用三个参数来表示声音
-
-
-
-- **量化位数**
-
-    
-
-    8位，16位，24位三种
-
-    
-
-- **取样频率**
-
-    
-
-    44kHz
-
-    
-
-- **采样点振幅**。
-
-    
-
-    单声道振幅数据为$n\*1$矩阵点，立体声为$n\*2$矩阵点
-
-    
-
-WAV格式文件所占容量（B\) = （取样频率 X 量化位数 X 声道） X 时间 / 8 \(字节= 8bit\)
-
-
-
-WAV的文件头
-
-
-
-1. **RIFF 标识**：4 个字节的 ASCII 字符串，用于标识文件类型。通常为 "RIFF"。
-
-    
-
-2. **文件大小**：4 个字节，表示文件总大小（包括文件头和音频数据）。
-
-    
-
-3. **WAVE 标识**：4 个字节的 ASCII 字符串，用于标识文件格式。通常为 "WAVE"。
-
-    
-
-4. **格式块标识**：4 个字节的 ASCII 字符串，用于标识格式块的开始。通常为 "fmt "。
-
-    
-
-5. **格式块大小**：4 个字节，表示格式块的大小（不包括格式块标识和大小字段本身）。
-
-    
-
-6. **音频格式**：2 个字节，表示音频数据的编码格式，例如 PCM。
-
-    
-
-7. **声道数**：2 个字节，表示音频数据的声道数，例如单声道或立体声。
-
-    
-
-8. **采样率**：4 个字节，表示音频数据的采样率，即每秒采样的样本数。
-
-    
-
-9. **数据传输速率**：4 个字节，表示数据传输速率（每秒字节数）。
-
-    
-
-10. **块对齐**：2 个字节，表示每个采样点的字节数（包括所有声道）。
-
-    
-
-11. **样本大小**：2 个字节，表示每个采样点的位深度。
-
-    
-
-12. **数据块标识**：4 个字节的 ASCII 字符串，用于标识数据块的开始。通常为 "data"。
-
-    
-
-13. **数据大小**：4 个字节，表示音频数据的大小（不包括数据块标识和大小字段本身）。
-
-    
-
-#### 2\. 网页
-
-
-
-###### 1\.开发者模式
-
-
-
-Device Mode 切换到移动设备优先的完全自适应式网站 可以选择设备
-
-
-
-Media 
-
-
-
-Elements
-
-
-
-\.\.\.
-
-
-
-###### 2\.HTTP协议
-
-
-
-> Internet 全球性的计算机网络体系结构，包括万维网（WWW）、电子邮件、文件传输协议（FTP）、即时通讯
-> 
-> 
-> 
-> [Http协议详解\(深入理解\)\_http通信协议详解\-CSDN博客](https://blog.csdn.net/weixin_38087538/article/details/82838762)
-> 
-> 
-
-
-
-    HTTP协议，即超文本传输协议\(Hypertext transfer protocol\)。用于从WWW服务器传输超文本到本地浏览器的传送协议。
-
-
-
-    HTTP是一个应用层协议，由请求和响应构成，是一个标准的客户端服务器模型。
-
-
-
-    在Internet中所有的传输都是通过TCP/IP进行的。HTTP协议作为TCP（传输层）/IP（网络层）模型中应用层的协议也不例外。HTTP协议通常承载于TCP协议之上，有时也承载于TLS或SSL协议层之上，这个时候，就成了我们常说的HTTPS。
-
-
-
-    HTTP默认的端口号为80，HTTPS的端口号为443。
-
-
-
-1. HTTP客户端发起一个请求，建立一个到服务器指定端口（默认是80端口）的TCP连接。
-
-    
-
-2. 每个Web站点都运行一个服务器进程,它不断地监听TCP的端口80,以便发现是否有向它发来连接请求；
-
-    
-
-3. 一旦收到请求并建立了TCP连接之后,浏览器就向服务器发出某个页面的请求,服务器接着就返回请求的页面作响应；
-
-    
-
-4. 最后连接被释放。这之间一系列信息的传输都遵循HTTP。
-
-    
-
-HTTP 有两类报文：
-
-
-
-    请求报文——从客户向服务器发送请求报文。
-
-
-
-    响应报文——从服务器到客户的回答。
-
-
-
-HTTP构成
-
-
-
-1. 请求方法
-
-    
-
-HTTP是一个客户端和服务器端请求和应答的标准（TCP）。
-
-
-
-客户端（浏览器、爬虫）称为user agent，有资源的应答服务器称为origin server。在用户代理和源服务器中间可能存在多个中间层，比如代理，网关，或者隧道（tunnels）。
-
-
-
-TCP socket是在网络通信中用于建立 TCP 连接的端点, 应用程序可以创建一个 TCP Socket来尝试连接到远程主机，或者等待远程主机的连接请求, 一旦连接建立，双方的 Socket 之间就会形成一个全双工的通信通道，可以通过这个通道进行数据的发送和接收。
-
-
-
-3. **统一资源定位符URL\(Uniform Resource Locator\)**
-
-    
-
-###### 3\.TCP回声服务器
-
-
-
-**什么是TCP？**
-
-
-
-  TCP 的全称为传输控制协议（TCP，Transmission Control Protocol）是一种面向连接的、可靠的、基于[字节流](https://so.csdn.net/so/search?q=%E5%AD%97%E8%8A%82%E6%B5%81&spm=1001.2101.3001.7020)的传输层通信协议。
-
-
-
-**什么是回声服务器？**
-
-
-
-  \*\*回声服务器\*\*是指一种收到客户端发送的消息后，将消息回传至客户端服务器，这种服务器代码简单，但功能健全，非常适合帮助初学者理解网络编程中TCP协议。
-
-
-
-\!\[linux\_tcp\.png\]\(C:\\Users\\Jacob Du\\Desktop\.md\\linux\_tcp\.png\)
-
-
-#### 4\.软件架构
-
-
-
-**资源分类**
-
-
-
-静态资源：使用静态网页开发技术（\*\*HTML、CSS、JavaScript\*\*）发布的资源
-
-
-
-- 特点：所有用户访问，得到的结果一样
-
-- **如果用户请求的是静态资源，那么服务器会直接将静态资源发送给浏览器，浏览器中内置了静态资源的解析引擎，可以解析静态资源（浏览器只能解析静态资源！）**。因为每个浏览器的解析引擎可能不一样，所以相同的网页可能在不同浏览器展示有所区别。
-
-- HTML：搭建基础网页，展示页面的内容
-
-- CSS：布局美化页面
-
-- JavaScript：控制页面元素，让页面有动态效果
-
-    
-
-动态资源：使用动态网页开发技术（\*\*jsp/servlet,php,asp\.\.\.\*\*）发布的资源
-
-
-
-- 特点：所有用户访问，得到的结果可能不一样
-
-- \*\*如果用户请求的是动态资源，那么服务器会执行动态资源，转换为静态资源，再发送给浏览器（浏览器无法解析动态资源！）
-
-    
-
-#### 5\. Docker
-
-
-
-[前端程序员如何学习 Docker （一） \(zsxq\.com\)](https://articles.zsxq.com/id_mcuo90bszsfx.html)
-
-
-
-Docker是开源的应用容器引擎，允许开发者将应用程序和依赖环境打包到一个可移植的容器，类似一个沙箱，能够在支持docker的地方运行。
-
-
-
-Dockerhub是Docker官方服务器，是最大的容器镜像库，可以在上面存储分享和管理容器镜像。
-
-
-
-#### 6\. tmux
-
-
-
-Session会话
-
-
-
-Window窗口
-
-
-
-启动新会话：
-
-
-
-```Plain Text
-tmux [new -s 会话名 -n 窗口名]
-```
-
-
-
-恢复会话：
-
-
-
-```Plain Text
-tmux at [-t 会话名]
-```
-
-
-
-列出所有会话：
-
-
-
-```Plain Text
-tmux ls
-```
-
-
-
-关闭会话：
-
-
-
-```Plain Text
-tmux kill-session -t 会话名
-```
-
-
-
-关闭所有会话：
-
-
-
-```Plain Text
-tmux ls | grep : | cut -d. -f1 | awk '{print substr($1, 0, length($1)-1)}' | xargs kill
-```
-
-
-
-窗格（分割窗口）
-
-
-
-```Plain Text
-%  垂直分割
-"  水平分割
-o  交换窗格
-x  关闭窗格
-⍽  左边这个符号代表空格键 - 切换布局
-q 显示每个窗格是第几个，当数字出现的时候按数字几就选中第几个窗格
-{ 与上一个窗格交换位置
-} 与下一个窗格交换位置
-z 切换窗格最大化/最小化
-```
-
-
-
-窗格快捷键
-
-
+管道把上一条命令的 stdout 接到下一条命令的 stdin：
 
 ```Bash
-Ctrl+b %：划分左右两个窗格。
-Ctrl+b "：划分上下两个窗格。
-Ctrl+b <arrow key>：光标切换到其他窗格。<arrow key>是指向要切换到的窗格的方向键，比如切换到下方窗格，就按方向键↓。
-Ctrl+b ;：光标切换到上一个窗格。
-Ctrl+b o：光标切换到下一个窗格。
-Ctrl+b {：当前窗格与上一个窗格交换位置。
-Ctrl+b }：当前窗格与下一个窗格交换位置。
-Ctrl+b Ctrl+o：所有窗格向前移动一个位置，第一个窗格变成最后一个窗格。
-Ctrl+b Alt+o：所有窗格向后移动一个位置，最后一个窗格变成第一个窗格。
-Ctrl+b x：关闭当前窗格。
-Ctrl+b !：将当前窗格拆分为一个独立窗口。
-Ctrl+b z：当前窗格全屏显示，再使用一次会变回原来大小。
-Ctrl+b Ctrl+<arrow key>：按箭头方向调整窗格大小。
-Ctrl+b q：显示窗格编号。 
+ps -ef | grep java | grep -v grep
+cat app.log | grep -c 'ERROR'      # 也可以直接 grep -c 'ERROR' app.log，少一次 fork
 ```
 
-
-
-窗口快捷键
-
-
+想在保存日志的同时继续看，用 `tee`：
 
 ```Bash
-窗口快捷键
-Ctrl+b c：创建一个新窗口，状态栏会显示多个窗口的信息。
-Ctrl+b p：切换到上一个窗口（按照状态栏上的顺序）。
-Ctrl+b n：切换到下一个窗口。
-Ctrl+b <number>：切换到指定编号的窗口，其中的<number>是状态栏上的窗口编号。
-Ctrl+b w：从列表中选择窗口。
-Ctrl+b ,：窗口重命名。
-end
+./run.sh 2>&1 | tee run.log        # 屏幕和文件同时有
+./run.sh 2>&1 | tee -a run.log     # 追加
 ```
 
+管道的退出码有个反直觉之处：**`$?` 只反映最后一个命令的状态**，前面命令失败会被吞掉。
 
+```Bash
+$ grep 'x' not-exist.txt | wc -l
+0
+$ echo $?          # 0，因为 wc 成功了
+```
 
-## 总结
+两种处理方式：
 
+```Bash
+set -o pipefail                    # 管道中任一命令失败，整体就失败
+echo "${PIPESTATUS[@]}"            # 拿到管道中每个命令各自的退出码
+```
+
+退出码本身是脚本与命令行判断的依据：`0` 表示成功，非 0 表示失败。常见误用是把 `$$` 当成退出码——**`$$` 是当前 shell 的进程号，`$?` 才是上一条命令的退出码**。
+
+```Bash
+$ echo $$
+32145
+$ ls /no/such/file 2>/dev/null
+$ echo $?
+2
+```
+
+### 命令组合与安全写法
+
+```Bash
+cmd1 && cmd2           # cmd1 成功才执行 cmd2
+cmd1 || cmd2           # cmd1 失败才执行 cmd2（常用的兜底）
+cmd1 ; cmd2            # 无论成败都执行
+grep -q 'ready' f && echo up || echo down    # 把检查结果变成一句话
+```
+
+`$()` 做命令替换，比反引号可读、可嵌套：
+
+```Bash
+today=$(date +%F)
+root=$(echo "scale=2; (-$b + sqrt($delta)) / (2 * $a)" | bc)
+```
+
+引用变量的两条纪律：
+
+- **`"$var"` 一定要加引号**，否则含空格或通配符的值会被再次拆分。
+- 不要用 `ls` 的输出去驱动逻辑（`for f in $(ls)`），文件名里的空格会把它拆坏。需要遍历文件时用 shell 的通配符 `for f in ./*.log` 或 `find ... -print0`。
+
+`xargs` 把上一条命令的输出变成参数，比 `for` 循环更适合批量操作：
+
+```Bash
+grep -rl 'oldName' src/ | xargs sed -i 's/oldName/newName/g'
+find . -name '*.tmp' -print0 | xargs -0 rm -f
+```
+
+---
+
+## 三、权限、用户与 sudo
+
+### 权限模型：rwx 对目录和文件的含义不同
+
+权限位分三组，分别对应**所有者 u / 同组 g / 其他 o**，每组三个位 r、w、x。首字符表示类型：`-` 普通文件、`d` 目录、`l` 软链接、`c` 字符设备、`b` 块设备、`s` 套接字、`p` 管道。
+
+`rwx` 在文件与目录上**含义不同**，这是 `Permission denied` 最常被误判的地方：
+
+| 权限位 | 对文件 | 对目录 |
+|---|---|---|
+| `r` | 读取内容 | 列出目录下有哪些名字（`ls`） |
+| `w` | 修改内容 | 在目录内创建、删除、重命名条目（需要同时有 `x`） |
+| `x` | 作为程序执行 | 进入目录、访问其中条目（`cd`、读写已知路径的文件） |
+
+由此得出两条反直觉但正确的结论：
+
+- 一个目录只有 `r` 没有 `x`，`ls` 能看到文件名，但 `cd` 进去或 `cat` 里面的文件都会失败。
+- 能不能删除一个文件，取决于**它所在目录的 `w`**，而不是文件自己的权限位。
+
+```Bash
+chmod 644 file      # 所有者可读写，其他人只读——普通文件默认
+chmod 755 dir       # 所有者可读写执行，其他人可读可执行——目录和可执行文件默认
+chmod 600 key.pem   # 只有所有者可读写——私钥、凭据文件
+chmod 700 script.sh
+chmod +x script.sh  # 符号模式：给 u/g/o 都加执行位
+chmod u+x,g-w file  # 精确指定
+chmod -R 755 dir    # 递归
+chown user:group file
+chown -R app:app /opt/app
+umask               # 新建文件/目录要抹掉的权限位，常见 022
+```
+
+`umask 022` 意味着新建文件是 `666 & ~022 = 644`，新建目录是 `777 & ~022 = 755`，这解释了"为什么新文件默认没有执行权限"。
+
+**反例**：`chmod -R 777` 能"解决"权限问题，但解决的是症状，同时把写权限开放给了系统上所有用户。它还会让原本靠权限位工作的程序静默失效（比如 ssh 会拒绝使用权限过宽的私钥），最终把问题从"配错权限"变成"不知道谁改过文件"。
+
+### `Permission denied` 的排查顺序
+
+按下面的顺序走，绝大多数情况在第二步就能定位：
+
+```Bash
+# 1. 我是谁，属于哪些组
+id
+whoami
+
+# 2. 路径上每一级目录的权限都要检查 —— 缺一个 x 就足够失败
+namei -l /opt/app/conf/app.yml
+```
+
+`namei -l` 会逐级列出路径上每个组件的权限，这是最省事的一步：很多人只看了目标文件的权限，却忽略了 `/opt` 或 `/opt/app` 少一个 `x`。
+
+```Bash
+# 3. 排除文件属性与挂载因素
+lsattr file                       # 看到 i 说明被 chattr +i 锁住，root 也改不了
+mount | grep ' /data '            # 看是否挂成了 ro（只读）
+findmnt -no OPTIONS /data         # 是否带 noexec（不可执行）、nosuid
+
+# 4. 排除安全模块
+getenforce                        # SELinux：Enforcing 时要查 audit.log
+dmesg | grep -i 'denied'          # SELinux/AppArmor 的拒绝记录
+```
+
+常见误判：
+
+| 现象 | 真实原因 |
+|---|---|
+| `ls` 能看到文件但 `cat` 报错 | 目录缺 `x` |
+| 删除自己目录里的文件被拒 | 文件所在目录缺 `w` |
+| root 也改不了文件 | `chattr +i` 或挂载为只读 |
+| 脚本有执行权限却 `Permission denied` | 挂载点带 `noexec`，或开头 shebang 指向的解释器不存在 |
+| 私钥明明存在却提示 `bad permissions` | 文件权限过宽，ssh 主动拒绝 |
+
+### 用户、组与密码文件
+
+```Bash
+useradd -m -s /bin/bash deploy            # 建用户并建房目录
+useradd -r -s /sbin/nologin svcapp        # 系统用户，不允许登录
+usermod -aG docker deploy                 # 追加到附加组（-a 不能省）
+usermod -s /sbin/nologin deploy           # 改成不可登录
+groupadd -g 1500 devops
+id deploy                                 # 查 UID/GID/所有组
+grep '^docker:' /etc/group                # 先确认组存在
+```
+
+`usermod -aG` 有三个高频陷阱：
+
+- 漏掉 `-a` 会**覆盖**用户原有的附加组，只剩新加的那个。
+- 加组后**必须重新登录**（或开新会话）才生效，因为组成员关系在会话建立时已经确定并缓存。急着验证可以用 `newgrp docker` 临时切换。
+- 不要手工编辑 `/etc/group` 来加人，容易写坏格式。
+
+`/etc/passwd` 七个字段，含义固定：
+
+```Plain Text
+用户名:口令占位符:UID:GID:用户说明:主目录:登录 shell
+root:x:0:0:root:/root:/bin/bash
+daemon:x:1:1:daemon:/usr/sbin:/usr/sbin/nologin
+```
+
+口令早已不在这个文件里（`x` 是占位符），真正的散列在 `/etc/shadow`。把 shell 设为 `/usr/sbin/nologin` 是"建一个不能登录的服务账号"的标准做法。
+
+```Bash
+whoami      # 当前用户名
+who         # 当前有哪些登录会话
+w           # 会话 + 来源 IP + 负载，排查"谁在机器上"用这个
+last        # 最近的登录历史
+```
+
+### `sudo` 与 `sudoers` 的最小配置
+
+```Bash
+sudo -l                       # 我能以什么身份执行哪些命令（排障第一步）
+sudo cmd                      # 以 root 执行
+sudo -u appuser cmd           # 以指定用户执行
+sudo -i                       # 切换到 root 的登录 shell，加载 root 的环境
+sudo -s                       # 切换 shell，但保留当前环境变量
+sudo bash                     # 只拿到一个 root shell，不加载配置
+```
+
+`sudo -i` 与 `sudo -s` 的区别在"环境变量有没有跟着变"，很多"sudo 之后命令找不到"的问题就来自这里。
+
+授权规则写在一个固定格式里：`用户 主机=(可切换的身份) 是否需要密码: 可执行的命令`。用 `visudo` 编辑（会做语法检查，直接改文件一旦写错会锁死 sudo）。
+
+```Bash
+# /etc/sudoers.d/deploy
+deploy ALL=(ALL) NOPASSWD: /usr/bin/systemctl restart myapp
+%devops ALL=(ALL) ALL
+user01 localhost=(root) NOPASSWD: /usr/bin/passwd, !/usr/bin/passwd root
+```
+
+- 用**完整绝对路径**授权，`/usr/bin/systemctl restart myapp` 这种粒度才是安全的。
+- 命令前的 `!` 表示禁止，用于精确排除。
+- `NOPASSWD` 一旦放开给 `ALL`，等价于给了完整的 root 权限，只适合容器或一次性环境。
+- 用 `Cmd_Alias`、`User_Alias` 做分组，适合规则变多以后，规则少时不必引入。
+
+---
+
+## 四、进程、端口与磁盘排查
+
+这一章覆盖线上最常被叫去处理的四类现象：**谁在吃 CPU/内存、端口被谁占了、进程杀不掉、磁盘满了**。
+
+### 进程视图：`ps` 与 `top` 该看哪几列
+
+```Bash
+ps -ef                      # 全部进程，UNIX 风格：UID PID PPID C STIME TTY TIME CMD
+ps aux                      # BSD 风格，多出 %CPU %MEM RSS VSZ
+ps -ef --forest             # 树状展示父子关系
+ps -eo pid,ppid,%cpu,%mem,etime,cmd --sort=-%mem | head    # 按内存排序取前几名
+```
+
+几个列比其余重要得多：
+
+| 列 | 含义与用法 |
+|---|---|
+| `PPID` | 父进程。判断"是谁拉起的"，也能发现被守护进程反复重启 |
+| `STAT` | 状态码：`R` 运行、`S` 可中断睡眠、`D` 不可中断睡眠、`Z` 僵尸、`T` 停止 |
+| `RSS` | 实际占用的物理内存，判断内存占用的看这个，不是 `VSZ` |
+| `TIME` | 累计占用 CPU 的时间，不是运行时长；运行时长看 `etime` |
+
+`STAT` 里最常见的排障信号是 `D`（不可中断睡眠，通常在等 IO）和 `Z`（僵尸）。`D` 状态的进程**连 `kill -9` 都杀不掉**，因为它不响应信号，只能等 IO 完成或重启系统，所以先查它在等什么 IO 才有意义。
+
+```Bash
+pgrep -af java                  # 按名字找进程，-a 显示完整命令行
+pgrep -f 'app.jar'              # -f 匹配完整命令行，能精确定位 java 应用
+pkill -f 'app.jar'              # 按命令行杀
+pstree -p <pid>                 # 看进程树
+```
+
+`pkill -f` 的匹配范围很宽，可能在杀掉目标的同时命中自己的 shell 或同名的其他进程，**先 `pgrep -af` 确认匹配集，再执行 `pkill`**。
+
+`top` 里优先看三处：第一行 `load average`、`%Cpu(s)` 里的 `wa`、按 `M`/`P` 排序后的 `RES`。
+
+- `load average` 要和 `nproc` 一起看：4 核机器上 load 5 已经超载，32 核机器上 load 5 很闲。
+- `wa` 高说明 CPU 在等 IO，瓶颈大概率在磁盘或网络，不在 CPU。
+- `RES` 才是进程真实占用的物理内存。
+
+### 信号与终止进程：为什么先 `TERM` 后 `KILL`
+
+| 信号 | 编号 | 用途 |
+|---|---|---|
+| `SIGHUP` | 1 | 终端断开；很多守护进程用它表示"重载配置" |
+| `SIGINT` | 2 | `Ctrl+C`，中断 |
+| `SIGQUIT` | 3 | `Ctrl+\`，退出并产生 core |
+| `SIGKILL` | 9 | 强制杀死，**不可被捕获、不可被忽略** |
+| `SIGUSR1/2` | 10/12 | 用户自定义，`SIGUSR1` 常用于"重新打开日志文件" |
+| `SIGTERM` | 15 | 请求终止，可以被捕获 |
+| `SIGSTOP`/`SIGCONT` | 19/18 | 暂停/继续 |
+| `SIGCHLD` | 17 | 子进程状态变化，父进程据此回收 |
+
+```Bash
+kill -l                  # 列出全部信号名与编号
+kill <pid>               # 默认发 SIGTERM
+kill -15 <pid>           # 明确写出来，便于 review
+kill -HUP <pid>          # 让服务重载配置
+kill -9 <pid>            # 最后手段
+kill -0 <pid>            # 不发送信号，只检查进程是否存在（看退出码）
+killall -u appuser       # 按用户名杀
+```
+
+**先 `TERM` 后 `KILL` 的理由**：`TERM` 能让程序走完关闭流程——刷缓冲、写完日志、关闭连接、释放锁；`KILL` 直接由内核回收，进程没有任何机会清理，可能留下半写文件、未释放的锁和损坏的本地状态。只有在 `TERM` 被忽略或进程卡死时才升级到 `KILL`。
+
+进程"杀不掉"的三种真实原因：
+
+1. **`D` 状态**：在等不可中断的 IO，信号要等系统调用返回才处理。查它等什么：`cat /proc/<pid>/stack`（需 root）、`iostat -x 1`、`dmesg`。
+2. **僵尸进程**：进程其实已经死了，只剩一条表项，`kill` 自然无效。真正要做的是处理它的父进程（回收子进程），而不是杀僵尸本身。
+3. **被守护进程反复拉起**：杀完立刻出现新 PID，说明有 systemd/supervisor 在重启它。正确做法是停掉服务：`systemctl stop xxx`，或先看 `ps -o ppid= -p <pid>` 找到拉起者。
+
+### 前后台与长任务：`nohup`、`disown` 与 `setsid`
+
+```Bash
+./run.sh &               # 放到后台
+jobs                     # 列出当前 shell 的作业
+fg %1                    # 把 1 号作业调回前台
+bg %1                    # 让暂停的作业继续在后台跑
+Ctrl+Z  ->  bg           # 忘了加 & 时的补救流程
+```
+
+`Ctrl+C` 发 `SIGINT` 终止前台进程，`Ctrl+Z` 发 `SIGTSTP` 只是暂停。但**用 `&` 放到后台的进程仍属于当前会话**，退出终端时会收到 `SIGHUP` 而被终止，所以长任务必须再加一层：
+
+```Bash
+nohup ./run.sh > run.log 2>&1 &     # 忽略 SIGHUP，并把输出落盘
+disown %1                           # 已经从 & 启动的作业，用 disown 摘出作业表
+setsid ./run.sh > run.log 2>&1 &    # 新会话，彻底脱离终端
+```
+
+`nohup` 场景下**重定向不能省**：不写 `> run.log 2>&1`，输出会进 `nohup.out` 或直接丢弃，事后无从排查。要长期稳定的服务，应该交给 systemd 而不是 `nohup`（见第六章）。
+
+### 端口占用：`ss` 与 `lsof` 的排查顺序
+
+现象是"服务起不来，提示 `Address already in use`"或"端口通了但响应不对"。
+
+```Bash
+ss -lntp                       # 监听中的 TCP，带进程信息
+ss -lnup                       # 监听中的 UDP
+ss -tanp                       # 所有 TCP 连接
+ss -lntp 'sport = :8080'       # 只看指定端口
+```
+
+`-p` 显示进程信息需要权限，非本用户的进程要用 sudo。`netstat` 已基本被 `ss` 取代（更快，且 `netstat` 在多数新发行版里需要额外安装），旧文档里的 `netstat -tunlp` 语义上对应 `ss -lntup`。
+
+```Bash
+lsof -i :8080                  # 谁占用了 8080
+lsof -p <pid>                  # 这个进程打开了哪些文件
+lsof -i -a -u appuser          # 某用户的网络连接
+```
+
+完整排查路径：`ss -lntp` 找到 PID → `ps -fp <pid>` 确认是不是预期进程 → 是旧实例就 `kill` 或 `systemctl stop`，是别的服务就改端口或先解决冲突。
+
+验证服务是否真的可用，不要只看端口在听：
+
+```Bash
+curl -I http://127.0.0.1:8080/          # 看状态码和头
+curl -v http://127.0.0.1:8080/ 2>&1     # 看完整握手与请求过程
+curl -f -s -o /dev/null -w '%{http_code}\n' http://127.0.0.1:8080/health
+```
+
+网络层的其他工具按需使用：`dig`/`host` 查 DNS 解析、`ping`/`traceroute`/`mtr` 查连通性与路径、`curl -I` 区分"网络不通"和"服务返回错误"。
+
+### 磁盘与 inode：空间去哪了
+
+```Bash
+df -h                          # 各挂载点使用率
+df -i                          # inode 使用率
+df -h /data                    # 只看某个挂载点
+```
+
+`df -h` 显示还有空间却报 `No space left on device`，八成是 **inode 用尽**：inode 数量在格式化时就确定了，大量小文件（会话文件、缓存碎片、maildir）会先耗尽 inode 而不是字节数。`df -i` 的 `IUse%` 到 100% 就是这个原因。
+
+定位"是谁占了空间"，自顶向下逐层缩：
+
+```Bash
+du -sh /data/* | sort -rh | head -20          # 第一层谁最大
+du -xh --max-depth=1 / | sort -rh             # 从根开始逐层看，-x 不跨文件系统
+du -sh ./*/ | sort -rh                        # 只看子目录
+```
+
+`du -sh *` **不包含隐藏文件**，怀疑有 `.cache` 之类时用 `du -sh .[!.]* *` 或 `ls -la` 先确认。
+
+如果 `du` 统计出来的总和对不上 `df` 的使用量，最常见的原因是**文件已被删除但进程仍持有它**：
+
+```Bash
+lsof +L1                       # 链接数为 0 但仍被打开的文件
+lsof | grep -i deleted         # 等价的另一条路径
+```
+
+对于这类文件，`rm` 只是去掉了目录项，磁盘块要等句柄关闭才释放。处理方式是**重启持有它的进程**，或在不重启的前提下清空内容：
+
+```Bash
+: > /proc/<pid>/fd/<n>         # 谨慎使用，适用于日志类文件
+```
+
+定位单个大文件：
+
+```Bash
+find / -xdev -type f -size +1G -exec ls -lh {} + 2>/dev/null
+```
+
+挂载相关：
+
+```Bash
+lsblk                          # 块设备与挂载点树状图
+findmnt                        # 当前挂载情况
+mount /dev/sdb1 /data
+umount /data                   # 提示 target is busy 时，先用 lsof/fuser 找占用者
+fuser -mv /data                # 谁在用这个挂载点
+```
+
+`umount` 报 `busy` 时不要用 `-l`（lazy）硬绕，先查清是谁还在里面，否则数据可能丢失。开机自动挂载写在 `/etc/fstab`，改错会导致系统起不来，编辑前先备份，并用 `mount -a` 验证。**改动过的机器上如果 `/` 突然变只读，先看 `mount | grep ' ro '` 和 `dmesg`（常见原因是文件系统错误触发了 remount-ro）。**
+
+### 内存与负载：`free`、`uptime` 与 OOM
+
+```Bash
+free -h
+uptime                         # load average: 1 分钟 / 5 分钟 / 15 分钟
+vmstat 1 5                     # 每秒采样，看 r（运行队列）、si/so（换页）、wa
+```
+
+`free -h` 里三列容易看错：
+
+| 列 | 含义 |
+|---|---|
+| `free` | 完全空闲的内存，通常很小，**不代表内存不足** |
+| `buff/cache` | 内核用于缓存磁盘数据的内存，可被随时回收 |
+| `available` | 新程序真正可以拿到的内存估算，**判断内存是否紧张看这一列** |
+
+内存耗尽的现场在 dmesg 里：
+
+```Bash
+dmesg -T | grep -iE 'oom|killed process'     # -T 显示可读时间
+```
+
+OOM killer 会选择评分最高的进程杀掉，日志里会明确写出 `Killed process <pid> (<name>)`。排查方向通常是：容器/进程的内存 limit 设置过小、堆外内存与缓存未计入、或是内存泄漏（配合 `ps -eo pid,rss,etime --sort=-rss` 观察 RSS 随时间单调上涨的进程）。
+
+---
+
+## 五、环境变量、远程连接与终端复用
+
+### shell 启动文件：变量为什么没生效
+
+"我明明写进配置文件了，为什么还是找不到命令"——绝大多数是这个加载顺序问题。bash 分两类启动方式：
+
+| 启动方式 | 读取的文件（按顺序） |
+|---|---|
+| 登录 shell（`ssh` 登录、`su -`、`bash -l`） | `/etc/profile` → `~/.bash_profile` → `~/.bash_login` → `~/.profile`（三者取第一个存在的） |
+| 交互式非登录 shell（打开新终端标签、`bash`） | `/etc/bash.bashrc` → `~/.bashrc` |
+| 非交互式（脚本、cron） | 不读上述文件，只读 `$BASH_ENV` 指定的文件 |
+
+关键点：
+
+- `~/.bash_profile` 与 `~/.bashrc` 是**两个不同的入口**，登录时只读前者。Debian/Ubuntu 的 `~/.profile` 里通常有一句 source `~/.bashrc`，而 RHEL 系默认没有，所以在 RHEL 上把 PATH 写进 `~/.bashrc` 会发现登录后不生效。
+- 环境变量要用 `export` 才会传给子进程；`var=value` 只是当前 shell 的普通变量，子进程看不到。
+- `source file` 是在**当前 shell** 里执行，能影响当前环境；`bash file` / `./file` 是开子进程执行，里面的 `export`、`cd` 都不会留下。
+
+```Bash
+export PATH="$PATH:/opt/myapp/bin"        # 追加而不是覆盖，覆盖会救不回来
+export JAVA_HOME=/usr/lib/jvm/java-17
+source ~/.bashrc                          # 让当前会话立即生效
+```
+
+排查顺序：
+
+```Bash
+echo $SHELL                     # 现在用的是不是 bash
+echo $0; shopt -q login_shell && echo login || echo non-login
+bash -l -c 'echo $PATH'         # 用登录 shell 复现一次，判断配置文件到底有没有被读
+env | sort                      # 实际生效的环境变量
+```
+
+`set` 用来改变 shell 自身行为，脚本里最实用的三个：
+
+```Bash
+set -euo pipefail
+# -e 任一命令失败即退出；-u 使用未定义变量报错；-o pipefail 管道任一环节失败即失败
+```
+
+`set VAR=value` 不会设置环境变量，也不要指望它导出；要导出就用 `export`（`declare -x` 等价，但 `export` 可读性更好）。
+
+### ssh 密钥登录与连不上排查
+
+```Bash
+ssh-keygen -t ed25519 -C 'dujiakang@szvt.com'          # 首选的现代算法
+ssh-keygen -t rsa -b 4096 -f ~/.ssh/zdlt_test          # 需要兼容老服务端时用 rsa
+ssh-copy-id -i ~/.ssh/id_ed25519.pub user@server
+```
+
+密钥登录失败的三个最常见原因，按概率排：
+
+1. **权限过宽**。`~/.ssh` 必须 700，`authorized_keys` 必须 600，且家目录不能对组或其他用户可写。sshd 的 `StrictModes` 会直接忽略这样的密钥，日志里只说"没有可用密钥"，很容易误判成密钥内容错。
+2. **公钥放错位置**。服务端要放到目标用户的 `~/.ssh/authorized_keys`，不是自己的机器。
+3. **`known_hosts` 记录过期**。重装或换 IP 后会报 `REMOTE HOST IDENTIFICATION HAS CHANGED`：
+
+```Bash
+ssh-keygen -R server          # 删掉旧记录再连
+```
+
+连不上的排查主力是 `-v`，它会打印每一步协商结果：
+
+```Bash
+ssh -v user@server            # 第一层
+ssh -vvv user@server          # 还没定位到就用三层
+```
+
+看到 `Offering public key` 之后立刻 `Authentication failed`，就回到权限检查；卡在 `Connecting to` 则是网络或端口问题，此时用 `ssh -p 2222 -o ConnectTimeout=5` 缩小范围。
+
+`~/.ssh/config` 能把长命令变成别名，日常效率提升最明显：
+
+```Plain Text
+Host prod
+    HostName 10.0.0.12
+    User deploy
+    Port 2222
+    IdentityFile ~/.ssh/id_ed25519_prod
+    ServerAliveInterval 60        # 防 NAT/防火墙掐断空闲连接
+    StrictHostKeyChecking accept-new
+```
+
+之后 `ssh prod`、`scp prod:/var/log/app.log .` 都能直接用这个别名。
+
+SSH 隧道在排查"服务只在机器内网可见"时非常有用：
+
+```Bash
+ssh -L 8080:127.0.0.1:8080 prod          # 本地 8080 → 远端 8080
+ssh -L 3306:db.internal:3306 prod        # 通过跳板机访问内网数据库
+ssh -R 9000:127.0.0.1:3000 prod          # 反向：远端 9000 → 本地 3000
+```
+
+### 传输文件：`scp` 与 `rsync` 的选择
+
+```Bash
+scp file user@server:/path/                # 上传文件
+scp -r dir user@server:/path/              # 上传目录
+scp user@server:/path/file .               # 下载到当前目录
+scp -r user@server:/var/www/remote_dir/ /tmp/
+scp -P 2222 file user@server:/path/        # 注意端口是大写 -P
+```
+
+`scp` 简单但不支持增量。反复同步目录、传大量小文件或需要断点续传时用 `rsync`：
+
+```Bash
+rsync -avz --progress src/ user@server:/data/src/       # 增量同步
+rsync -avz --delete src/ user@server:/data/src/         # 让目标与源完全一致（危险）
+rsync -avz --exclude='.git' --exclude='node_modules' src/ user@server:/data/src/
+rsync -avz --partial --append-verify big.iso user@server:/data/
+```
+
+**结尾斜杠的语义必须记牢**：
+
+```Bash
+rsync -a src/ /dst/     # 把 src 的"内容"同步到 /dst
+rsync -a src  /dst/     # 在 /dst 下创建 src 目录
+```
+
+`--delete` 会删除目标端多余的文件，方向写反就是生产事故，执行前先加 `-n`（dry-run）看一遍。
+
+### 下载与接口探活：`wget` 与 `curl`
+
+```Bash
+wget https://example.com/pkg.tar.gz
+wget -c https://example.com/big.iso        # 断点续传
+wget -O newname.tar.gz https://example.com/download?id=123   # 指定文件名
+wget -r -np -k https://example.com/docs/   # 递归下载站点
+```
+
+`curl` 更偏向"调试 HTTP"：
+
+```Bash
+curl -I https://example.com                      # 只看响应头
+curl -L -o pkg.tar.gz https://example.com/pkg    # 跟随重定向并保存
+curl -s -S https://api.example.com/health        # -s 静默 -S 保留错误
+curl -v https://example.com                      # 完整请求/响应过程
+curl -X POST -H 'Content-Type: application/json' -d '{"a":1}' https://api/x
+curl -b cookies.txt -c cookies.txt https://example.com/login
+curl --resolve api.example.com:443:10.0.0.12 https://api.example.com/   # 不改 hosts 做验证
+curl -k https://self-signed.local                 # 跳过证书校验，仅临时使用
+```
+
+两个必须记住的边界：
+
+- **不要 `curl ... | bash`**。执行前至少 `curl -o /tmp/x.sh` 然后读一遍，线上环境更是如此。
+- 遇到证书错误，先查**本机时间**和 CA 证书包（`date`、`ls /etc/ssl/certs`）而不是直接上 `-k`。系统时间跳变导致证书校验失败是很常见的一类"灵异问题"。
+
+### tmux：SSH 断线后任务不中断
+
+`nohup` 只能保住进程，看不到输出、不能中途交互。`tmux` 解决的是同一个问题但保留完整终端：**会话独立于 SSH 连接存在，断开后重新连上还能回到原样**。
+
+```Bash
+tmux new -s work          # 新建命名会话
+tmux ls                   # 列出会话
+tmux attach -t work       # 重新进入（断线后就是这一步）
+tmux kill-session -t work
+```
+
+前缀键是 `Ctrl+b`，下面这些够覆盖绝大多数使用：
+
+| 操作 | 快捷键 |
+|---|---|
+| 脱离会话（保持后台运行） | `Ctrl+b` 然后 `d` |
+| 垂直 / 水平分屏 | `Ctrl+b` `%` / `Ctrl+b` `"` |
+| 在窗格间切换 | `Ctrl+b` 方向键 |
+| 关闭当前窗格 | `Ctrl+b` `x` |
+| 当前窗格最大化切换 | `Ctrl+b` `z` |
+| 新建 / 切换窗口 | `Ctrl+b` `c` / `Ctrl+b` 数字 |
+| 重命名窗口 | `Ctrl+b` `,` |
+
+典型用法是**一条命令长期跑、同时看日志**：一个窗格跑构建或压测命令，另一个窗格 `tail -F app.log`，然后 `Ctrl+b d` 脱离，下班或断线后 `tmux attach -t work` 回到现场。
+
+`~/.tmux.conf` 里几行就让默认配置顺手很多：
+
+```Plain Text
+set -g mouse on
+set -g history-limit 50000
+set -g base-index 1
+setw -g pane-base-index 1
+```
+
+长任务托管方式的取舍：
+
+| 方式 | 适用 | 代价 |
+|---|---|---|
+| `nohup ... &` | 一次性、不需要回看输出 | 无交互，输出只能翻日志文件 |
+| `tmux` | 人工执行、需要回看现场 | 依赖会话，重启机器不保留 |
+| `systemd` | 需要长期运行、开机自启、崩溃自动重启 | 需要写 unit 文件 |
+
+---
+
+## 六、软件包、定时任务与服务管理
+
+### 判断软件从哪来：`which` 与包归属反查
+
+卸载或升级之前，先弄清它是怎么装进来的：
+
+```Bash
+which -a nginx                  # 所有同名可执行文件的位置
+type -a nginx
+rpm -qf $(which nginx)          # RHEL 系：这个文件属于哪个包
+dpkg -S $(which nginx)          # Debian 系
+readlink -f $(which python3)    # 顺着软链接看真实路径
+```
+
+路径与安装方式的对应关系：
+
+| 路径 | 通常来源 |
+|---|---|
+| `/usr/bin`、`/usr/sbin` | 发行版包管理器 |
+| `/usr/local/bin`、`/usr/local/sbin` | 源码编译安装（`--prefix=/usr/local`） |
+| `/opt/<name>` | 第三方整包安装 |
+| `~/.local/bin` | 用户级 pip/pipx 之类 |
+| `~/miniconda3/bin`、`~/.nvm/...` | 版本管理工具 |
+
+### 包管理器：`yum`/`dnf` 与 `apt` 的对应用法
+
+RHEL 系用 `yum`/`dnf`（CentOS 8+、RHEL 8+ 已由 `dnf` 取代 `yum`，命令语法兼容），Debian 系用 `apt`。
+
+| 目的 | `dnf` / `yum` | `apt` |
+|---|---|---|
+| 刷新索引 | `dnf makecache` | `apt update` |
+| 搜索 | `dnf search <kw>` | `apt search <kw>` |
+| 查看包信息 | `dnf info <pkg>` | `apt show <pkg>` |
+| 已安装列表 | `dnf list installed` | `apt list --installed` |
+| 文件属于哪个包 | `dnf provides <file>` | `apt-file search <file>` |
+| 安装 | `dnf install <pkg>` | `apt install <pkg>` |
+| 升级单个 | `dnf update <pkg>` | `apt install --only-upgrade <pkg>` |
+| 升级全部 | `dnf update` | `apt upgrade` |
+| 卸载 | `dnf remove <pkg>` | `apt remove <pkg>` |
+| 清缓存 | `dnf clean all` | `apt clean` |
+
+几个容易混的点：
+
+- `apt update` 只是**刷新索引**，不升级任何软件；`apt upgrade` 才是升级。把前者当后者用是典型误读。
+- `apt remove` 保留配置，`apt purge` 连配置一起删。
+- `dnf` 有事务历史，可以回滚，这在"升级把环境搞坏了"时很有用：
+
+```Bash
+dnf history list
+dnf history info <id>
+dnf history undo <id>      # 撤销某次事务（慎用，可能连带影响后续操作）
+```
+
+本地下载的包直接安装：
+
+```Bash
+dnf install ./pkg.rpm       # 会自动解析依赖，比 rpm -i 好
+rpm -ivh pkg.rpm            # 不解析依赖
+apt install ./pkg.deb
+```
+
+RPM 的查询能力在排查时很有用：
+
+```Bash
+rpm -qa | grep <kw>         # 已安装的包
+rpm -ql <pkg>               # 这个包装了哪些文件
+rpm -qf /usr/bin/xxx        # 这个文件属于哪个包
+rpm -qp --scripts pkg.rpm   # 安装前后会执行什么脚本
+```
+
+### 源码安装与手工卸载
+
+源码安装的标准三步：
+
+```Bash
+./configure --prefix=/usr/local/myapp
+make -j"$(nproc)"
+sudo make install
+```
+
+几点经验：
+
+- **`--prefix` 显式指定**，别用默认值，否则文件散落到 `/usr/local` 各处，卸载时找不到边界。
+- `make -j$(nproc)` 并行编译，大项目差距明显。
+- 保留源码目录和 `config.status`，之后可以用 `make uninstall` 卸载（作者写了这条规则才行）。
+- 安装完要让系统找到它：可执行文件加 `PATH`，库文件要么进 `/usr/local/lib` 后执行 `sudo ldconfig`，要么用 `LD_LIBRARY_PATH`（后者只影响当前会话，不要写进全局配置）。
+
+源码装的软件**没有包管理器记录，包管理器也卸不掉它**，只能手工清理。判断方式：
+
+```Bash
+$ which myapp
+/usr/local/bin/myapp        # /usr/local 或 /opt → 源码安装
+/usr/bin/myapp              # /usr/bin → 包管理器安装
+```
+
+手工卸载的顺序是先确认安装清单，再逐项删除，最后验证：
+
+```Bash
+# 1. 先看它到底装了哪些文件（安装目录里的 install_manifest.txt 是最好的依据）
+cat build/install_manifest.txt
+
+# 2. 按目录逐个确认后再删，不要凭印象一次 rm -rf 一串
+sudo rm -rf /usr/local/myapp
+rm -f /usr/local/bin/myapp /usr/local/lib/libmyapp.so
+sudo rm -f /etc/myapp.conf
+sudo rm -rf /var/lib/myapp
+
+# 3. 检查启动文件里有没有残留的 PATH/LD_LIBRARY_PATH
+grep -n myapp ~/.bashrc ~/.bash_profile /etc/profile /etc/profile.d/*.sh 2>/dev/null
+
+# 4. 让动态链接器刷新缓存，并验证
+sudo ldconfig
+which -a myapp
+ldd $(which myapp) 2>/dev/null
+```
+
+**卸载的前提是"知道装了哪些文件"**。所以安装时把 `install_manifest.txt` 或 `make install` 的输出留档，比事后凭记忆找文件可靠得多。包管理器安装的软件则只需一条 `dnf remove <pkg>` / `apt purge <pkg>`，不要手工删 `/usr/bin` 下的文件——那会让包数据库与实际文件不一致，之后安装同一个包会报冲突。
+
+### cron：定时任务不执行怎么查
+
+```Bash
+crontab -l                  # 看当前用户的任务
+crontab -e                  # 编辑（保存即生效）
+crontab -r                  # 删除全部任务，无确认，误敲风险极高
+```
+
+时间字段是"分 时 日 月 周"，后面接命令：
+
+```Plain Text
+* * * * * command               # 每分钟
+30 21 * * * /opt/app/restart.sh # 每天 21:30
+10 1 * * 6,0 /opt/app/sync.sh   # 每周六、周日 01:10
+*/5 * * * * /opt/app/poll.sh    # 每 5 分钟
+0 3 1 * * /opt/app/monthly.sh   # 每月 1 号 03:00
+@reboot /opt/app/start.sh       # 开机执行
+```
+
+特殊符号：`*` 任意值、`,` 列表、`-` 区间、`/` 步长。`@daily`、`@hourly`、`@reboot` 是便捷写法。
+
+**cron 不执行几乎都是环境问题**，因为它的运行环境比交互 shell 干净得多：
+
+| 现象 | 原因 | 处理 |
+|---|---|---|
+| 手工能跑，cron 里失败 | `PATH` 只有 `/usr/bin:/bin` | 命令写绝对路径；或在 crontab 顶部设 `PATH=` |
+| 提示找不到 java/python | 依赖登录 shell 的环境变量 | 在 crontab 里显式 `export JAVA_HOME`，或写一个加载环境后再执行的包装脚本 |
+| `~` 没有展开成家目录 | cron 不经过 shell 展开 | 写绝对路径 |
+| 命令里的日期参数异常 | `%` 在 crontab 里表示换行，必须转义 | 写成 `\%` |
+| 完全没痕迹 | 输出被丢弃且没有 MTA 投递 | 追加 `>> /var/log/myjob.log 2>&1` |
+
+```Plain Text
+PATH=/usr/local/bin:/usr/bin:/bin
+SHELL=/bin/bash
+*/5 * * * * /opt/app/poll.sh >> /var/log/poll.log 2>&1
+```
+
+**重定向不能省**，这是排查定时任务的第一手段：没有它，任务失败时你连报错都看不到。
+
+日志位置按发行版不同：Debian/Ubuntu 在 `/var/log/syslog`（`grep CRON /var/log/syslog`），RHEL 系在 `/var/log/cron`，用 systemd 的机器还可以：
+
+```Bash
+journalctl -u cron --since '1 hour ago'     # RHEL 系的服务名是 crond
+```
+
+同一个任务被 `crontab -e` 和 `/etc/cron.d/` 同时定义了两次，会出现"任务跑两遍"，这是常被忽略的一类重复。
+
+### systemd 与 journalctl：服务在跑吗、为什么挂了
+
+`systemctl` 管服务生命周期，`journalctl` 看它的日志，这两个配合是排查服务问题的标准入口。
+
+```Bash
+systemctl status myapp            # 状态 + 最近日志 + 退出码，第一步就看它
+systemctl start myapp
+systemctl stop myapp
+systemctl restart myapp
+systemctl reload myapp            # 重载配置，不重启进程
+systemctl enable myapp            # 开机自启（不含"现在启动"）
+systemctl enable --now myapp      # 自启 + 立即启动
+systemctl disable myapp
+systemctl list-units --failed     # 当前所有失败的服务
+systemctl daemon-reload           # 改了 unit 文件后必须执行
+```
+
+一个最小可用的 unit 文件，放在 `/etc/systemd/system/myapp.service`：
+
+```Plain Text
+[Unit]
+Description=My App
+After=network.target
+
+[Service]
+Type=simple
+User=appuser
+WorkingDirectory=/opt/app
+Environment=PORT=8080
+ExecStart=/opt/app/bin/server --config /opt/app/conf/app.yml
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target
+```
+
+几个决定排障难易度的字段：
+
+- `User=` 决定服务以什么身份运行，权限问题往往出在这里而不是文件权限本身。
+- `Environment=` / `EnvironmentFile=` 是服务拿环境变量的正路，比在脚本里 `source ~/.bashrc` 可靠（systemd 不读用户的 shell 配置）。
+- `Restart=on-failure` + `RestartSec` 是自动拉起，但**配置错误导致的崩溃重启会形成循环**，表现就是"进程杀完又出现"。
+
+```Bash
+journalctl -u myapp                  # 该服务的日志
+journalctl -u myapp -f               # 实时跟踪
+journalctl -u myapp --since '30 min ago'
+journalctl -u myapp -p err           # 只看 error 及以上
+journalctl -b                        # 本次开机以来
+journalctl -xe                       # 最近的错误与提示，定位启动失败常用
+journalctl --disk-usage              # 日志占用
+journalctl --vacuum-time=7d          # 只保留 7 天
+```
+
+两个高频事故：
+
+1. **改了 unit 文件不执行 `daemon-reload`**，`systemctl restart` 用的还是旧配置，现象是"改了没用"。
+2. **`enable` 不等于"现在启动"**，`start` 也不等于"开机自启"。`.service` 必须同时 `enable` 和 `start`（或 `enable --now`）。
+
+---
+
+## 附：排障路径速查
+
+现象 → 第一条命令 → 下一条，把上面的内容压成一张表。左侧是现象，中间是先敲什么，右侧是敲完之后大概率要做什么。
+
+| 现象 | 第一条命令 | 之后 |
+|---|---|---|
+| 磁盘满 / 写不进去 | `df -h`；`df -i` | `du -xh --max-depth=1 / \| sort -rh`；inode 满则找小文件，字节满是 `lsof +L1` 查已删除但被占用的句柄 |
+| 端口被占用 | `ss -lntp` | `ps -fp <pid>` 确认后 `systemctl stop` 或 `kill` |
+| 服务起不来 | `systemctl status <svc>`；`journalctl -u <svc> -xe` | 看退出码与 `User=`/`WorkingDirectory=` 是否正确，改完 `daemon-reload` 再重启 |
+| Permission denied | `id`；`namei -l <path>` | 补目录 `x` 位或改属主；再排 `chattr +i`、只读挂载、SELinux |
+| 命令找不到 | `which -a <cmd>`；`echo $PATH` | 补 `PATH` 并确认写在登录 shell 会读的文件里 |
+| 进程杀不掉 | `ps -o pid,ppid,stat,cmd -p <pid>` | `D` 状态查 IO（`iostat`/`dmesg`），`Z` 状态处理父进程，被反复拉起则停 systemd 服务 |
+| 内存告急 | `free -h` 看 `available` | `ps -eo pid,rss,etime --sort=-rss \| head`；`dmesg -T \| grep -i oom` |
+| 负载高但 CPU 不高 | `uptime`；`nproc`；`vmstat 1` | `wa` 高查磁盘/网络 IO，`r` 高查计算密集进程 |
+| 定时任务没跑 | `crontab -l`；`grep CRON /var/log/syslog` | 改绝对路径、显式设置环境变量、给命令加 `>> log 2>&1` |
+| ssh 连不上 | `ssh -vvv user@host` | 卡在连接→查网络/端口/防火墙；认证失败→查 `~/.ssh` 权限与 `authorized_keys` |
+| 接口不通 | `curl -v http://host:port/health` | 先确认端口在听（`ss -lntp`），再区分 DNS、网络与服务自身返回 |
