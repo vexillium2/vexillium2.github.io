@@ -444,11 +444,11 @@ H\(P, Q\) = \-Σ P\(x\) log Q\(x\)
 
 交叉熵与熵的差称为**KL散度**，也叫相对熵。在训练网络的场景下，我们可以将近似分布Q看作是网络的实时输出，而我们的目的是通过训练使得Q尽量逼近真实分布，等价于最小化KL散度。网络在使用交叉熵损失函数时需要先用sigmoid函数或者Softmax函数将输出转换为概率值。
 
-![Image](/src/.vuepress/public/assets/images/cs/ai/cross_entrophy1.png)
+![Image](/assets/images/cs/ai/cross_entrophy1.png)
 
 A\. 对于单标签分类任务，对单个样本而言，假设真实分布为Y，网络输出的分布为Y尖，总类别数为n，交叉熵损失函数就是：
 
-![Image](/src/.vuepress/public/assets/images/cs/ai/cross_entrophy2.png)
+![Image](/assets/images/cs/ai/cross_entrophy2.png)
 
 在手写数字识别任务中（数字为0\~9），若样本是数字5，则对应的真实分布应为\[0,0,0,0,0,1,0,0,0,0\]，若网络输出分布为\[0\.1,0\.1,0,0,0,0\.7,0,0\.1,0,0\]，计算得到的Loss为0\.3567（因为独热编码特点，实际计算0\.7的负对数即可）；计算\[0\.2,0\.3,0\.1,0,0,0\.3,0\.1,0,0,0\] 则Loss为1\.2040。对比两种情况，前者损失小于后者，说明前者更接近真实分布。在一个batch下计算单标签分类任务的交叉熵损失函数（使用平均损失算法避免过大的batchsize导致梯度过大，参数更新步子迈的过大，所以归一化）：
 
