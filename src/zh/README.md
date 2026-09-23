@@ -11,7 +11,7 @@ heroText: blog of vexillium
 tagline: continual learning
 heroFullScreen: true
 bgImage: https://raw.githubusercontent.com/neverbiasu/blog/refs/heads/main/src/.vuepress/public/assets/images/cover-light.jpg
-bgImageDark: https://raw.githubusercontent.com/neverbiasu/blog/refs/heads/main/src/.vuepress/public/assets/images/united.jpg
+bgImageDark: https://raw.githubusercontent.com/neverbiasu/blog/refs/heads/main/src/.vuepress/public/assets/images/cover-dark.jpg
 actions:
   - text: blog
     link: ./home
