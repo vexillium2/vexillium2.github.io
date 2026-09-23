@@ -1,6 +1,6 @@
 ---
 lang: zh-CH
-title: RAG 检索增强生成
+title: 03 RAG 检索增强生成
 description: RAG 架构演进、Query 理解、检索与 Rerank、向量化、数据处理管道与 GraphRAG 等主题
 date: 2026-09-07
 category:

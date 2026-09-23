@@ -1,6 +1,6 @@
 ---
 lang: zh-CH
-title: 多模态应用
+title: 10 多模态应用
 description: VLM 架构、多模态 Agent 与 RAG、OCR 选型、语音链路与视频理解
 date: 2026-09-07
 category:

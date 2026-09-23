@@ -12,8 +12,7 @@ tag:
   - 版本控制
   - 开发效率
 ---
-
-# Git
+# 01 Git
 
 > [官方文档](https://git-scm.com/docs)
 > 必看书籍-Pro Git 第二版
@@ -272,37 +271,31 @@ git config --global --unset https.proxy
 
 #### Commit 信息规范
 
-推荐使用以下类型作为前缀：
+使用提交格式规范：`type(scope): subject`
 
-- `feat`: 新功能（feature）
-
-- `fix`: 修补 bug
-
-- `docs`: 文档（documentation）
-
+- `feat`: 新增功能
+- `fix`: 修 bug、修路径、修 build 等问题
+- `docs`: 纯文档内容增删改
 - `style`: 格式（不影响代码运行的变动）
-
-- `refactor`: 重构（既不是新增功能，也不是修改 bug）
-
-- `chore`: 构建过程或辅助工具的变动
+- `refactor`: 不改行为的结构调整、拆分、移动（既不是新增功能，也不是修改 bug）
+- `chore`: 依赖、配置、构建过程或辅助工具的变动
 
 - `revert`: 撤销，版本回退
-
 - `perf`: 性能优化
-
-- `test`：测试
-
+- `test`: 测试
 - `improvement`: 改进
-
-- `build`: 打包
-
+  - `build`: 打包
 - `ci`: 持续集成
 
 **书写示例：**
 
 ```Plain Text
-fix: 修复项目参与者批量导入功能
-
+chore(skills): 新增 feynman-read 与 swe-tech-blog 两个 skill
+fix(ai-swe): 修正 01-07 章节序号错位
+fix(ide-shortcuts): 修复图片相对路径写错导致部署失败
+chore: 初始化笔记仓库
+docs(ai-swe): 补充 01-llm 的面试要点
+fix(import): 修复项目参与者批量导入功能
 - 修复CSV文件字段映射错误
 - 添加数据验证和错误处理
 - 优化用户反馈信息

@@ -8,7 +8,6 @@ category:
 tag:
   - 操作系统
 ---
-# 操作系统深度笔记
 
 > 目标：从硬件中断到用户态协程，建立完整的执行模型认知。
 > 原则：每个主题 = 是什么 → 为什么存在 → 怎么工作 → 代价与权衡 → 实际案例
@@ -679,3 +678,148 @@ io_uring_cqe_seen(&ring, cqe);                   // 归还 CQE，队列才能复
 ### 附录 C 术语表（中英对照）
 
 ### 附录 D 参考资料与延伸阅读
+
+### 附录 E 进程、信号与 IPC 素材速查
+
+> 从 Linux 使用笔记迁移过来的系统编程素材，按"速查表 + 关键语义"整理，待按正文章节层级重写后并入。已修正原笔记中不准确的表述。
+
+**编译与可执行文件**
+
+`.c` →（预处理）`.i` →（编译）`.s` →（汇编）`.o` →（链接）ELF。`objdump -d` 反汇编可执行文件，`objdump -t` 看符号表。Linux 汇编用 AT&T 语法：寄存器前缀 `%`（`%rax`）、立即数前缀 `$`（`$42`）、十六进制 `0x`。
+
+**进程地址空间分段**
+
+x86-64 使用 48 位规范地址（低 47 位有效，高位符号扩展），用户空间与内核空间各占低半区与高半区，各 128 TiB。用户空间从低到高：
+
+| 段 | 内容 | 归属判断 |
+|---|---|---|
+| text | CPU 指令 | 只读、可共享 |
+| rodata | 常量字符串、字面量 | 只读 |
+| data | **已初始化且初值非 0** 的全局变量与静态局部变量 | 可读写，随程序加载 |
+| bss | 未初始化、或初值为 0 的全局变量与静态局部变量 | 不占文件空间，加载时清零 |
+| heap | `malloc`/`new` 动态分配 | 由 break 指针标识，`brk()`/`sbrk()` 伸缩 |
+| mmap 区 | 共享库、文件映射、匿名映射 | 堆与栈之间的空闲区域 |
+| stack | 非静态局部变量、函数调用栈帧、命令行参数与环境变量（栈顶） | 向下增长，`ulimit -s` 限制，超限即栈溢出 |
+
+堆的几点边界：由空闲链表管理，容易产生外部碎片；每次扩容可能触发用户态与内核态切换。glibc 的实现里，`malloc` 请求超过 `M_MMAP_THRESHOLD`（默认 128 KiB）时改走 `mmap`，`free` 时直接归还内核而不是留在堆里——这是 glibc 行为，不是标准规定。
+
+**进程创建与替换**
+
+```c
+pid_t fork(void);                     // 父进程返回子进程 PID，子进程返回 0，失败返回 -1
+pid_t wait(int *status);              // 回收任一子进程，避免僵尸
+pid_t waitpid(pid_t pid, int *status, int options);
+int execve(const char *filename, char *const argv[], char *const envp[]);
+```
+
+- `fork` 采用写时复制（COW），父子进程初始共享物理页，任一写入才复制。
+- 子进程退出后若父进程不回收，会残留为僵尸进程（`Z` 状态，`kill` 无效），回收动作由 `wait`/`waitpid` 完成。
+- `execve` 用新程序替换当前进程的代码段、数据段、堆栈，**成功时不返回**，失败返回 -1 并设置 `errno`；PID 与已打开的 fd（未设 `FD_CLOEXEC`）保留。
+
+**会话、进程组与守护进程**
+
+- 进程组：共享同一 PGID 的进程集合，可作为整体接收信号。每个进程都属于一个进程组，进程只能为自己或子进程设置 PGID。
+- 会话：一组相关进程组的集合，`setsid()` 建立新会话并脱离控制终端。
+- 守护进程的标准创建步骤：`fork` 后父进程退出 → `setsid()` → 再次 `fork`（可选，防止重新获得终端）→ `chdir("/")` → `umask(0)` → 把 0/1/2 重定向到 `/dev/null`。这也解释了为什么守护进程的父进程最终是 init：真正的父进程先退出了。命名惯例以 `d` 结尾（`sshd`、`crond`）。
+
+**信号**
+
+| 概念 | 说明 |
+|---|---|
+| 未决 pending | 信号已产生但尚未递送给进程 |
+| 阻塞 blocked | 进程暂时屏蔽某信号，解除后才递送 |
+| 不可靠信号（1–31） | 非实时信号，同一信号未决期间再次产生**不排队，会丢失** |
+| 实时信号（34–64） | 可重复注册、排队，不会丢失 |
+
+64 个信号里 1–31 是非实时信号（编号 32、33 保留），34 及以上是实时信号。
+
+```c
+void (*signal(int sig, void (*func)(int)))(int);            // 语义在各平台不一致
+int sigaction(int sig, const struct sigaction *act, struct sigaction *oldact);
+```
+
+`sigaction` 优于 `signal`：可以明确 `sa_mask`（执行 handler 时屏蔽哪些信号）、`SA_RESTART`（是否自动重启被中断的系统调用），而 `signal` 在"handler 是否重置为默认"和"系统调用是否重启"上历史语义不统一。handler 内只能调用异步信号安全函数（`write`、`_exit` 等），`printf`、`malloc` 都可能死锁。
+
+**System V IPC 速查**
+
+三种对象都以 `key_t` 标识，`ftok(path, id)` 由"已存在文件的 inode + 子序号"生成 key；`IPC_CREAT` 不存在才创建，加 `IPC_EXCL` 则已存在时报错；用户态管理命令是 `ipcs` / `ipcrm`。三种对象都随内核持续，直到显式 `IPC_RMID` 或重启。
+
+| 对象 | 创建/获取 | 操作 | 控制/删除 |
+|---|---|---|---|
+| 消息队列 | `msgget(key, flag)` | `msgsnd` / `msgrcv` | `msgctl(IPC_STAT/IPC_SET/IPC_RMID)` |
+| 共享内存 | `shmget(key, size, flag)` | `shmat`（附加，返回地址）/ `shmdt`（脱接） | `shmctl` |
+| 信号量 | `semget(key, nsems, flag)` | `semop(semid, sops, nsops)` | `semctl`（`SETVAL` / `IPC_RMID`） |
+
+`msgrcv` 的 `msgtyp` 决定取哪条：`0` 取队列中第一条；`>0` 取该类型的第一个；`<0` 取类型值 ≤ 绝对值中最小的一条。单条消息长度上限 `MSGMAX`，队列总容量上限 `MSGMNB`。
+
+`semop` 的 `sem_op` 语义（P/V 的底层形式）：
+
+| `sem_op` | 行为 |
+|---|---|
+| `> 0` | 加到信号量上（V 操作，释放），唤醒等待者 |
+| `= 0` | 等到信号量值为 0 才返回，否则阻塞 |
+| `< 0` | 尝试减去该值（P 操作，获取）；会导致负值则阻塞，直到可以满足 |
+
+`sembuf.sem_flg` 设 `IPC_NOWAIT` 可在无法完成时立即返回 `EAGAIN` 而不阻塞；设 `SEM_UNDO` 会让内核在进程异常退出时自动回滚该进程的改动，这是避免"进程崩溃后信号量永久占用"的关键标志。共享内存是三种 IPC 中吞吐最高的，但它本身不提供同步，必须配信号量或互斥量。
+
+**文件 IO API 速查**
+
+```c
+int open(const char *pathname, int flags, mode_t mode);
+ssize_t read(int fd, void *buf, size_t count);
+ssize_t write(int fd, const void *buf, size_t count);
+off_t lseek(int fd, off_t offset, int whence);
+int close(int fd);
+```
+
+`flags` 必选其一：`O_RDONLY` / `O_WRONLY` / `O_RDWR`（互斥）。可选项：`O_CREAT`（不存在则创建，此时必须用三参数形式并给 `mode`）、`O_EXCL`（与 `O_CREAT` 合用，已存在则失败，是"原子创建锁文件"的标准手法）、`O_TRUNC`、`O_APPEND`、`O_NONBLOCK`、`O_SYNC` / `O_DSYNC` / `O_RSYNC`、`O_DIRECT`。
+
+`mode` 用 `sys/stat.h` 的位掩码：`S_IRUSR`(0400)、`S_IWUSR`(0200)、`S_IXUSR`(0100)，同组的 `S_IRGRP`/`S_IWGRP`/`S_IXGRP`，其他的 `S_IROTH`/`S_IWOTH`/`S_IXOTH`。常用值就是 `0644`、`0755`、`0600`。
+
+`open` 返回的值一定是该进程当前**未使用的最小 fd**，所以 0/1/2 关闭后会被后续 `open` 占用——这也是重定向能把文件"变成" stdout 的原理。
+
+返回值语义上有三个必须处理的点：
+
+- `read`/`write` 都可能**短读短写**，返回的实际字节数小于请求值时必须在循环中重试。
+- `read` 返回 0 表示已到文件末尾，不是错误；返回 -1 才是错误，且要看 `errno`：`EINTR` 应当重试，`EAGAIN` 表示非阻塞模式下暂无数据。
+- `write` 返回 -1 时数据未必完全未写出，不能简单假定"没写成"。
+
+常见 `errno`：`ENOENT`（不存在）、`EACCES`（权限不足）、`EEXIST`（已存在）、`EINTR`（被信号中断）、`EAGAIN`（非阻塞下暂不可用）、`ENOSPC`（磁盘满）、`EMFILE`（进程 fd 用尽）。
+
+标准库流（`<stdio.h>`）是带缓冲的包装：
+
+| `fopen` mode | 语义 |
+|---|---|
+| `"r"` / `"rb"` | 只读，文件必须存在 |
+| `"w"` / `"wb"` | 只写，截断为 0 |
+| `"a"` / `"ab"` | 追加写 |
+| `"r+"` | 读写，文件必须存在 |
+| `"w+"` | 读写，截断为 0 |
+| `"a+"` | 读写，写在末尾 |
+
+`b` 在 Linux 下无实际区别（不区分文本与二进制）。缓冲策略：普通文件全缓冲、终端行缓冲、`stderr` 无缓冲，`fflush` 强制写出，进程异常退出时缓冲区内容会丢失——这是"日志最后几行不见了"的常见原因。
+
+`fread`/`fwrite` 返回的是**元素个数**而不是字节数；`fseek(stream, offset, SEEK_SET/SEEK_CUR/SEEK_END)` 是 `lseek` 的流版本。
+
+**文件元数据与权限判定**
+
+```c
+int stat(const char *pathname, struct stat *statbuf);    // 跟随符号链接
+int lstat(const char *pathname, struct stat *statbuf);   // 不跟随，用于查看链接自身
+```
+
+`struct stat` 的关键字段：`st_ino`（inode 号）、`st_mode`（类型 + 权限位）、`st_nlink`（链接数）、`st_uid`/`st_gid`、`st_size`、`st_blksize`/`st_blocks`、`st_atime`/`st_mtime`/`st_ctime`（`ctime` 是 inode 状态变更时间，不是创建时间）。
+
+权限判定不要手工拆位，用宏：`S_ISREG(st_mode)`、`S_ISDIR`、`S_ISLNK`、`S_ISCHR`、`S_ISBLK`、`S_ISSOCK`、`S_ISFIFO`；取权限位用 `st_mode & 0777`。按位判断的可读性很差，例如"属主是否有读权限"应写成 `(st_mode & S_IRUSR)`。
+
+**文件系统选型**
+
+| 文件系统 | 特点 | 适用 |
+|---|---|---|
+| ext4 | 日志、成熟稳定、工具链完备 | 通用默认选择 |
+| XFS | 大文件与大容量下表现好，在线扩容 | 大容量数据盘、日志盘 |
+| Btrfs / ZFS | 快照、校验、压缩、子卷 | 需要快照与数据校验的场景 |
+
+**磁盘物理结构与寻址**
+
+盘片（正反面）→ 每面一个读写磁头 → 盘面划分为同心磁道（外圈线速度高，通常靠外分配以获得更高顺序吞吐）→ 各盘面同一垂直线上的磁道构成柱面 → 每磁道划分为扇区（传统 512 B，现多为 4 KiB）。早期用 CHS（柱面-磁头-扇区）寻址，现在统一为 LBA 逻辑块寻址，由磁盘控制器负责映射。SSD 无机械部件，用浮栅晶体管存储电荷，随机读性能远优于机械盘，但写放大与寿命管理（磨损均衡、TRIM）成为新的设计约束。

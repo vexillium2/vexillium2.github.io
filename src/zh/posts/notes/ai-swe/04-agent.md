@@ -1,6 +1,6 @@
 ---
 lang: zh-CH
-title: Agent 智能体
+title: 04 Agent 智能体
 description: Agent 架构与规划模式、任务拆解、记忆系统、Multi-Agent、上下文工程与失败模式
 date: 2026-09-07
 category:

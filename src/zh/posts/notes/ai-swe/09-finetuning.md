@@ -1,6 +1,6 @@
 ---
 lang: zh-CH
-title: 模型微调
+title: 09 模型微调
 description: 微调选型决策、SFT 数据工程、LoRA/QLoRA、偏好对齐与训练工具链、部署评估
 date: 2026-09-07
 category:

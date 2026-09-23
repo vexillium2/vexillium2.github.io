@@ -1,6 +1,6 @@
 ---
 lang: zh-CH
-title: LLM 模型层基础
+title: 01 LLM 模型层基础
 description: Transformer 与 Attention、Tokenization、采样解码、上下文窗口、幻觉成因与模型选型等模型层高频主题
 date: 2026-09-07
 category:

@@ -1,6 +1,6 @@
 ---
 lang: zh-CH
-title: AI 应用开发框架
+title: 08 AI 应用开发框架
 description: 框架生态全景、LangChain/LangGraph、LlamaIndex、OpenAI/Anthropic SDK、AutoGen 与低代码平台对比
 date: 2026-09-07
 category:

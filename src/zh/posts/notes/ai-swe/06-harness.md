@@ -1,6 +1,6 @@
 ---
 lang: zh-CH
-title: Agent Harness 工程
+title: 06 Agent Harness 工程
 description: 以 Claude Code / Codex / OpenHands 为样本的沙箱执行、权限、会话状态与上下文管理工程
 date: 2026-09-07
 category:
