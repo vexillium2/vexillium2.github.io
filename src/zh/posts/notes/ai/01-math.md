@@ -327,7 +327,7 @@ $A \in \mathbb{R}^{m \times n}$ 把 $\mathbb{R}^n$ 映到 $\mathbb{R}^m$：输�
 
 **列空间** $\mathrm{Col}(A) = \{Ax : x \in \mathbb{R}^n\}$，即 $A$ 所有列向量的张成，也是线性变换 $A$ 的值域。
 
-**零空间** $\mathrm{Null}(A) = \{x : Ax = \mathbf{0}\}$，也叫核，即被变换 $A$ 压成零的那部分输入方向。
+**零空间**（也叫**核**，kernel）$\mathrm{Null}(A) = \{x : Ax = \mathbf{0}\}$，即被变换 $A$ 压成零的那部分输入方向。核记号与零空间等价：$\ker(A) = \mathrm{Null}(A)$；对一般线性映射 $T: V \to W$，核写成 $\ker(T) = \{v \in V : T(v) = \mathbf{0}_W\}$——输入空间里所有被映到零的元素，天然是 $V$ 的子空间。
 
 **秩** $\mathrm{rank}(A) = \dim\mathrm{Col}(A)$；**零化度** $\mathrm{nullity}(A) = \dim\mathrm{Null}(A)$。
 
@@ -359,6 +359,41 @@ $A \in \mathbb{R}^{m \times n}$ 把 $\mathbb{R}^n$ 映到 $\mathbb{R}^m$，像�
 
 **只有方阵且满秩时**，$A$ 既不压缩也不冗余，才存在双侧逆——这就是"逆矩阵存在"的几何含义。
 
+**性质（行满秩与列满秩）**
+
+$A \in \mathbb{R}^{m \times n}$ 有两种"满"：
+
+- **列满秩**：$\mathrm{rank}(A) = n$（秩等于列数）。等价于列向量线性无关、$\mathrm{Null}(A) = \{\mathbf{0}\}$、$A$ 是单射，也等价于 $A^{\top}A$ 可逆。
+- **行满秩**：$\mathrm{rank}(A) = m$（秩等于行数）。等价于行向量线性无关、$\mathrm{Col}(A) = \mathbb{R}^m$、$A$ 是满射，也等价于 $AA^{\top}$ 可逆。
+- 方阵时，行满秩 $\iff$ 列满秩 $\iff$ 可逆。
+
+**例**
+
+- $A = \begin{pmatrix}1 & 0\\ 0 & 1\\ 0 & 0\end{pmatrix} \in \mathbb{R}^{3 \times 2}$：$\mathrm{rank} = 2$ 等于列数，**列满秩但不行满秩**——它是单射，把 $\mathbb{R}^2$ 嵌入 $\mathbb{R}^3$，值域只是一张平面。
+- $A = \begin{pmatrix}1 & 0 & 0\\ 0 & 1 & 0\end{pmatrix} \in \mathbb{R}^{2 \times 3}$：$\mathrm{rank} = 2$ 等于行数，**行满秩但不列满秩**——它是满射，把 $\mathbb{R}^3$ 压到 $\mathbb{R}^2$，核是一维的。
+
+**注意**
+
+- 由 $\mathrm{rank}(A) \le \min(m, n)$，$m \ne n$ 时不可能既列满秩又行满秩。列满秩是"输入不冗余"，行满秩是"输出能铺满"。
+- "$A^{\top}A$ 可逆 $\iff$ 列满秩"的理由：由 $\mathrm{rank}(A^{\top}A) = \mathrm{rank}(A)$，方阵 $A^{\top}A$ 可逆当且仅当秩为 $n$，即 $\mathrm{rank}(A) = n$；$AA^{\top}$ 对称同理。
+
+**性质（四个基本子空间）**
+
+$A \in \mathbb{R}^{m \times n}$ 决定两对互为**正交补**的子空间：
+
+| 子空间 | 属于 | 维数 |
+|---|---|---|
+| 列空间 $\mathrm{Col}(A)$ | $\mathbb{R}^m$ | $\mathrm{rank}(A)$ |
+| 左零空间 $\mathrm{Null}(A^{\top})$ | $\mathbb{R}^m$ | $m - \mathrm{rank}(A)$ |
+| 行空间 $\mathrm{Col}(A^{\top})$ | $\mathbb{R}^n$ | $\mathrm{rank}(A)$ |
+| 零空间 $\mathrm{Null}(A)$ | $\mathbb{R}^n$ | $n - \mathrm{rank}(A)$ |
+
+**左零空间** $\mathrm{Null}(A^{\top}) = \{y : A^{\top}y = \mathbf{0}\}$ 是"被 $A^{\top}$ 压成零"的方向。两对正交关系：
+
+$$\mathrm{Null}(A) \perp \mathrm{Col}(A^{\top}),\qquad \mathrm{Col}(A) \perp \mathrm{Null}(A^{\top})$$
+
+验证第一条：任取 $x \in \mathrm{Null}(A)$ 与 $A^{\top}z \in \mathrm{Col}(A^{\top})$，则 $x^{\top}(A^{\top}z) = (Ax)^{\top}z = \mathbf{0}^{\top}z = 0$；第二条同理。
+
 **性质（齐次与非齐次方程的解集）**
 
 - $Ax = \mathbf{0}$（齐次）：解集就是 $\mathrm{Null}(A)$，**是子空间，必过原点**。
@@ -377,7 +412,7 @@ $Ax = b$ 的两个问题由两个量回答：**有没有解**看 $\mathrm{Col}(A
 
 线代 I 回答了 $Ax = b$ 有没有解、有多少解。这一章回答更进一步的问题：$X^{\top}X$ 什么时候可逆？不可逆时还能不能写出一个有意义的"逆"？以及，这件事和"把 $y$ 投影到列空间上"是不是同一件事。核心工具是特征分解与正定，核心结果是伪逆。
 
-### 特征值与特征分解：不变方向与谱
+### 特征值与特征分解：不变方向
 
 **定义**
 
@@ -385,7 +420,7 @@ $Ax = b$ 的两个问题由两个量回答：**有没有解**看 $\mathrm{Col}(A
 
 $$Av = \lambda v$$
 
-则称 $\lambda$ 为 $A$ 的**特征值**，$v$ 为对应的**特征向量**。特征值是特征多项式 $\det(A - \lambda I) = 0$ 的根。
+则称 $\lambda$ 为 $A$ 的**特征值**，$v$ 为对应的**特征向量**。特征值是特征多项式 $\det(A - \lambda I) = 0$ 的根。$A$ 所有特征值的集合称为 $A$ 的**谱**，记作 $\sigma(A) = \{\lambda : \det(\lambda I - A) = 0\}$。
 
 **性质**
 
