@@ -9,7 +9,7 @@ tag:
   - 算法
 ---
 
-[toc]
+[[toc]]
 
 ## 一、算法总揽与思维导图
 
@@ -123,7 +123,160 @@ for循环可以做的事：
 
 ### 3. C++ 常用STL
 
+### 4. Python Cheatsheet
 
+```python
+# 1. 输入、切片、for、enumerate、if
+n = int(input())
+arr = list(map(int, input().split()))
+for i, x in enumerate(arr):
+if x % 2 == 0:
+arr[i] = x // 2
+# Python:
+# range(n) -> 0 ~ n-1
+# // 整除，/ 浮点除法
+# 没有 i++，使用 i += 1
+# and / or / not
+# 0 <= x < n 可以直接写
+
+# 2. 排序：lambda 是算法题最容易忘的地方
+points = [[3, 5], [1, 2], [3, 1], [2, 4]]
+points.sort(key=lambda p: p[0])             # 按 x
+points.sort(key=lambda p: p[1])             # 按 y
+points.sort(key=lambda p: (p[0], p[1]))     # x升序，y升序
+points.sort(key=lambda p: (p[0], -p[1]))    # x升序，y降序
+# sorted() 返回新 list
+# sort() 原地修改
+
+# tuple 默认字典序比较：
+# (1, 5) < (2, 1)
+# (1, 5) < (1, 6)
+
+# 3. 二分查找：bisect
+from bisect import bisect_left, bisect_right
+arr = [1, 2, 2, 2, 5, 7]
+left = bisect_left(arr, 2)       # 第一个 >= 2
+right = bisect_right(arr, 2)     # 第一个 > 2
+count = right - left             # 2 出现次数
+
+# 4. 计数：dict / Counter
+from collections import Counter
+arr = [1, 2, 2, 3, 3, 3]
+cnt = Counter(arr)
+print(cnt[3])
+# 不使用 Counter：
+cnt = {}
+for x in arr:
+cnt[x] = cnt.get(x, 0) + 1
+# get(key, default) 很常用
+
+# 5. 两数之和：set / dict
+arr = [2, 7, 11, 15]
+target = 9
+seen = {}
+for i, x in enumerate(arr):
+if target - x in seen:
+print(seen[target - x], i)
+break
+seen[x] = i
+# in 可以直接判断 dict / set
+# dict 的 key 查找平均 O(1)
+
+# 6. BFS：deque + tuple
+from collections import deque
+q = deque([(0, 0)])
+visited = {(0, 0)}
+dirs = [(-1, 0), (1, 0), (0, -1), (0, 1)]
+while q:
+x, y = q.popleft()
+```
+for dx, dy in dirs:
+    nx, ny = x + dx, y + dy
+    if 0 <= nx < n and 0 <= ny < m:
+        if (nx, ny) not in visited:
+            visited.add((nx, ny))
+            q.append((nx, ny))
+```
+# queue：append() + popleft()
+# stack：append() + pop()
+# 坐标常用 tuple：(x, y)
+
+# 7. Top K：heapq
+import heapq
+arr = [5, 1, 8, 3, 2]
+heap = []
+for x in arr:
+heapq.heappush(heap, -x)
+largest = -heapq.heappop(heap)
+# heapq 默认小根堆
+# 想要大根堆，通常存 -x
+
+# 8. 前缀和 + 切片
+arr = [1, 2, 3, 4, 5]
+prefix = [0]
+for x in arr:
+prefix.append(prefix[-1] + x)
+# [l, r] 区间和
+total = prefix[r + 1] - prefix[l]
+# Python 切片：
+# arr[l:r] -> [l, r)
+# arr[::-1] -> 反转
+# arr[:r] / arr[l:]
+
+# 9. 二维数组初始化：避免引用陷阱
+n, m = 3, 4
+grid = [[0] * m for _ in range(n)]
+# 不要：
+# grid = [[0] * m] * n
+#
+# 后者的每一行实际上引用同一个 list
+
+# 10. DFS / 递归
+import sys
+sys.setrecursionlimit(10**6)
+def dfs(x):
+visited.add(x)
+```
+for y in graph[x]:
+    if y not in visited:
+        dfs(y)
+```
+# Python 默认递归深度较小
+# 深度较大的 DFS 注意设置递归上限
+
+# 11. 几个写算法时很容易突然忘记的写法
+a, b = b, a                  # 交换
+mx = max(arr, key=lambda x: x)   # max 也支持 key
+mn = min(points, key=lambda p: p[1])
+if not arr:                  # 判断空 list
+pass
+if x in (1, 2, 3):           # 多个值判断
+pass
+result = [x * 2 for x in arr if x > 0]   # 列表推导式
+s = ''.join(chars)            # list -> string
+chars = list(s)               # string -> list
+print(' '.join(map(str, arr))) # list 输出
+
+# 12. 最容易和 C++ 搞混的几个
+#
+# &&       -> and
+# ||       -> or
+# !        -> not
+# i++      -> i += 1
+# x ^ 2    -> XOR，不是平方
+# x ** 2   -> 平方
+# a / b    -> 浮点除法
+# a // b   -> 整除
+# {}        -> dict；空 set 要 set()
+# string   -> 不可修改
+# list     -> 动态数组
+# sort()   -> 原地排序
+# sorted() -> 返回新数组
+# map()    -> 迭代器，需要 list 时 list(map(...))
+# list.pop(0) -> O(n)，队列用 deque.popleft()
+"""
+
+```
 
 ```C++
 vector, 变长数组，倍增的思想

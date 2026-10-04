@@ -9,6 +9,8 @@ tag:
   - 编程语言
 ---
 
+[[toc]]
+
 ## Python规范
 
 参考https://peps\.python\.org/pep\-0008/
@@ -191,9 +193,95 @@ async def main():
 
 #### 属性
 
-@property
+`property` 是 Python 内置的**描述符**：`@property` 把一个方法包装成属性访问，之后 `obj.x` 触发 getter、`obj.x = v` 触发 setter、`del obj.x` 触发 deleter，调用方不需要感知背后是一次方法调用。
+
+```python
+class Quantity:
+    def __init__(self, value: int):
+        self._value = value            # 真值存私有名，避免与 property 同名递归
+
+    @property
+    def value(self) -> int:
+        return self._value
+
+    @value.setter
+    def value(self, v: int) -> None:
+        if v < 0:
+            raise ValueError('value 不能为负')
+        self._value = v
+```
+
+**property 本质是描述符协议（`__get__`/`__set__`/`__delete__`）的便捷封装**：函数本身就是描述符（实现了 `__get__`，把函数绑定成方法），所以 `@property` 才能把一个方法变成「看起来像属性」。setter 必须与 getter 同名，且 getter 定义在前——`@value.setter` 依赖 `value` 已经是 property 对象。
+
+工程上它主要解决两类问题：
+
+- **封装不变量**：领域对象（值对象、实体）通过 setter 在每次赋值时校验，保证对象状态始终合法。洋葱架构里 domain 层的值对象常用 property 暴露内部状态，外层只能读、不能绕过校验直接改。
+- **把存储形式与对外形式解耦**：对外是属性，内部可以是计算值、缓存或延迟加载，调用方感知不到差异；也可以借 property 做只读暴露，配合 `_x` 私有字段管理可变状态。
+
+常见陷阱：
+
+- **递归调用**：getter/setter 内部访问同名属性会再次触发 property，必须用另一个名字（约定 `_x`）存真值。
+- **property 是类属性，不能在实例上覆盖**：`obj.x = 1` 会走 setter；只读 property（未定义 setter）时抛 `AttributeError`。
+- **不要滥用**：只有「访问时需要逻辑」（校验、计算、兼容旧接口）才用 property；纯数据字段用普通属性或 `@dataclass`，需要「先收集、后统一校验」的传输对象（DTO）交给 pydantic 更合适——property 的 setter 只适合「不变量必须时刻成立」的领域对象。
 
 #### 抽象方法\&类方法
+
+这一节覆盖两个层次的问题：抽象方法与抽象基类（`@abstractmethod`/`ABC`）解决「如何定义继承契约」，类方法（`@classmethod`）解决「如何组织构造入口与类级状态」。
+
+**抽象基类（ABC，Abstract Base Class）用于「只定义契约、不提供（或只提供部分）实现」，强制子类实现指定方法：**
+
+```python
+from abc import ABC, abstractmethod
+
+class Repository(ABC):
+    @abstractmethod
+    def get(self, id: int):
+        ...
+
+    @abstractmethod
+    def save(self, entity) -> None:
+        ...
+
+class SqlRepository(Repository):
+    def get(self, id: int):
+        return self._db.query(id)
+
+    def save(self, entity) -> None:
+        self._db.insert(entity)
+
+# Repository()  →  TypeError: Can't instantiate abstract class Repository
+#                with abstract methods get, save
+```
+
+原理：`ABC` 的元类是 `ABCMeta`，`@abstractmethod` 给方法打上 `__isabstractmethod__` 标记；**元类在类创建时检查**，若类仍直接继承未实现的抽象方法（`__abstractmethods__` 非空），实例化抛 `TypeError`。抽象方法允许给默认实现，子类用 `super().method()` 复用；也可以声明抽象只读属性（`@property` 在外、`@abstractmethod` 在内），强制子类实现某个属性。
+
+工程上 ABC 承担的是**端口（Port）**角色：洋葱架构/DDD 中，domain 层用抽象基类定义端口（`Repository`、`UseCase` 这类「领域需要的接口」），application 层只依赖这些抽象，infrastructure 层提供具体实现（`SqlRepository`、`HttpClient`）。依赖方向由外指向内，domain 不 import 任何数据库或框架，换存储、换传输层都不需要动 domain。
+
+需要注意的边界：
+
+- **ABC 约束的是类结构，不是行为**。Python 是鸭子类型，需要「结构化类型检查、跨库松耦合」时 `typing.Protocol` 更合适——Protocol 不需要继承，对象实现同名方法即视为「实现」；ABC 则适合「强制子类实现 + 提供部分共享实现 + 用 `isinstance` 判断」的场景。
+- **`@abstractmethod` 只是标记，真正的拦截在元类**。它约束的是类定义时刻，不要把它当成运行期「所有子类一定实现」的保证。
+- **装饰器顺序**：`@abstractmethod` 与 `@classmethod`/`@staticmethod`/`@property` 组合时，`@abstractmethod` 要放在最内层（紧贴函数），否则装饰器顺序错乱。
+- **`collections.abc` 是一组现成的抽象基类**（`Iterable`、`Sequence`、`Mapping` 等），自定义容器继承它们能免费获得 `in`、`len` 等默认行为，或用 `ABC.register()` 把鸭子类型注册进去供 `isinstance` 判断。
+
+**`@classmethod` 把方法绑定到类而不是实例：第一个参数是 `cls`（类本身），无论 `Class.method()` 还是 `instance.method()` 调用，传入的都是该类。** 主要用途是**替代构造器（alternative constructor）**，为同一个类提供多种构造入口：
+
+```python
+class Money:
+    def __init__(self, amount: int, currency: str):
+        self.amount = amount
+        self.currency = currency
+
+    @classmethod
+    def from_cents(cls, cents: int) -> 'Money':
+        return cls(cents, 'CNY')
+
+    @classmethod
+    def from_dict(cls, d: dict) -> 'Money':
+        return cls(d['amount'], d['currency'])
+```
+
+用 `cls` 而不是写死 `Money(...)` 的关键价值在于**子类继承后仍保持多态**：子类调用继承来的 `from_dict`，`cls(...)` 创建的是子类实例。这也是 classmethod 与 staticmethod 的分界线——staticmethod 不接收任何隐式参数，写死的类名不会随继承变化。工程上领域对象（值对象、实体）常提供 `from_dict`/`from_str` 这类工厂方法作为规范化构造入口，把反序列化逻辑收在 domain 层而不是散落在外层。
 
 #### 静态方法（@staticmethod）
 
@@ -405,11 +493,7 @@ re.search(r'(?<=订单号：)\w+', '订单号：ORD2024071501')  *# 使用后顾
 
 官方使用urllib，但是推荐第三方库requests
 
-
-
 ### logging
-
-
 
 ```Bash
 # 配置 **Root Logger（根日志记录器）**

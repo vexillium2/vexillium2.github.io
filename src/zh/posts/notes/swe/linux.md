@@ -11,8 +11,8 @@ tag:
   - 排障
 ---
 
-> 全文主线只有一句：**遇到现象时，能用最短的命令路径定位到原因，并验证它确实被解决**。
-> 因此这里收的是可复用的命令组合、必要的最小机制（重定向、权限位、fd、inode）和实际踩过的坑，而不是每个命令的完整参数表——完整的 `--help` 属于 man page，不属于这篇笔记。
+[[toc]]
+
 > 每一节的写法尽量对齐"现象 → 判断依据 → 命令 → 验证"，可复用的形态优先。
 
 ---
@@ -621,22 +621,39 @@ setsid ./run.sh > run.log 2>&1 &    # 新会话，彻底脱离终端
 
 ### 端口占用：`ss` 与 `lsof` 的排查顺序
 
-现象是"服务起不来，提示 `Address already in use`"或"端口通了但响应不对"。
+现象是"服务起不来，提示 `Address already in use`"或"端口通了但响应不对"。两个工具的分工是：**优先 `ss`**——它走 netlink，快、基本必装、默认就输出数字端口；需要按连接状态筛选、或要顺着进程反查它打开了哪些文件时，再用 `lsof`。最小化镜像里经常没装 `lsof`，而 `ss` 属于 iproute2，通常在。
 
 ```Bash
 ss -lntp                       # 监听中的 TCP，带进程信息
 ss -lnup                       # 监听中的 UDP
-ss -tanp                       # 所有 TCP 连接
+ss -tanp                       # 所有 TCP 连接，含已建立
 ss -lntp 'sport = :8080'       # 只看指定端口
 ```
 
 `-p` 显示进程信息需要权限，非本用户的进程要用 sudo。`netstat` 已基本被 `ss` 取代（更快，且 `netstat` 在多数新发行版里需要额外安装），旧文档里的 `netstat -tunlp` 语义上对应 `ss -lntup`。
 
+`lsof` 里有两个开关不要省：
+
 ```Bash
-lsof -i :8080                  # 谁占用了 8080
-lsof -p <pid>                  # 这个进程打开了哪些文件
-lsof -i -a -u appuser          # 某用户的网络连接
+lsof -nP -iTCP:3080 -sTCP:LISTEN   # 谁在监听 3080
+lsof -nP -iTCP:3080                # 该端口上全部 TCP 连接（监听 + 已建立）
+lsof -p <pid>                      # 这个进程打开了哪些文件
+lsof -i -a -u appuser              # 某用户的网络连接
 ```
+
+- `-n` 不做 IP 反向解析，`-P` 不做端口到服务名的转换。两个都不加时，DNS 不可达会让这条本该秒回的命令卡上几秒到几十秒，端口还会显示成 `http` 之类的服务名，反而看不出是哪个数字端口。这组开关值得养成条件反射。
+- `-sTCP:LISTEN` 只看监听状态。不加它会把 LISTEN 和 ESTABLISHED 混在一起输出，而"谁占用了端口"（找服务）和"谁连上了这个端口"（找客户端）是两个不同的问题。
+- `-iTCP:` 比 `-i :` 更精确，后者不限协议，UDP 上的同号端口会一并列出。
+
+`lsof -i :3080` 一次输出多行是这个工具的常见误读点，靠最后一列的状态区分：
+
+```Plain Text
+COMMAND   PID  USER   FD   TYPE  DEVICE  SIZE/OFF  NODE NAME
+node     8412  app    23u  IPv6  1234567  0t0      TCP *:3080 (LISTEN)
+node     8412  app    24u  IPv6  1234568  0t0      TCP 10.0.0.5:3080->10.0.0.9:51732 (ESTABLISHED)
+```
+
+带 `(LISTEN)` 的那行才是占用端口的服务，`(ESTABLISHED)` 是它的客户端连接。看到多行就断言"有多个进程在抢同一个端口"，通常是把这两个概念混了。
 
 完整排查路径：`ss -lntp` 找到 PID → `ps -fp <pid>` 确认是不是预期进程 → 是旧实例就 `kill` 或 `systemctl stop`，是别的服务就改端口或先解决冲突。
 
