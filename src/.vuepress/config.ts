@@ -29,10 +29,10 @@ export default defineUserConfig({
   ],
 
   // 正文内目录：markdown 里写 `[[toc]]` 即可插入。
-  // 只列二级标题，三级标题的导航由右侧栏承担。
+  // 列出二级和三级标题（三级标题同样计入正文目录）。
   markdown: {
     toc: {
-      level: [2],
+      level: [2, 3],
     },
   },
 
