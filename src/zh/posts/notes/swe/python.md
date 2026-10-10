@@ -83,22 +83,87 @@ pip 用户也可以逐条替换旧命令：`uv venv` 建环境，`uv pip install
 
 可迭代对象（Iterable）是实现了 `iter` 方法的对象，可以通过 `for` 循环遍历，包括集合和生成器。迭代器、列表都是可迭代对象
 
+#### 闭包
+
+闭包解决的是「让函数记住它诞生时的上下文」。普通函数每次调用都是无状态的：调用结束，函数内部的局部名字空间就被释放，下次调用记不住上次的任何东西；想复用某个值（比如一个倍数、一个 logger、一个配置），要么每次显式传参，要么塞进全局变量——前者啰嗦，后者污染全局且不安全。闭包让函数把外层作用域里的变量「捕获」下来随自己走，调用方不再需要重复传。
+
+**闭包（closure）是一个函数：它引用（捕获）了定义它的外层作用域里的变量，即使外层作用域已经执行结束，这些变量仍随函数一起存活。闭包返回的是函数本身（`return inner` 而不是 `return inner()`），被捕获的变量由这个函数对象随身携带。**
+
+```python
+def make_multiplier(factor):        # factor 是外层函数的形参
+    prefix = 'result:'              # prefix 是外层函数体内定义的变量
+    def multiply(x):                # multiply 是内层函数
+        return f'{prefix} {x * factor}'   # 引用了 prefix 和 factor
+    return multiply                 # 返回函数本身，而非调用结果
+
+double = make_multiplier(2)
+double(5)            # 'result: 10'
+double.__closure__   # (<cell ... int>, <cell ... str>)：捕获的变量存在 cell 里
+```
+
+`multiply` 里的 `prefix` 和 `factor` 是**自由变量（free variable）**：在函数内被引用，但既不是它的形参、也不是在它体内赋值的变量。能被捕获的外部变量有两类——外层函数**体内定义的变量**（`prefix`）和外层函数的**形参**（`factor`），两者捕获机制相同，都进入同一个 cell 列表。闭包返回的 `double` 是 `multiply` 这个函数对象本身，而不是某次调用的结果。
+
+**内存/运行时位置与垃圾回收**：CPython 里自由变量存放在 **cell 对象**里，函数对象通过 `__closure__` 元组引用这些 cell，`__code__.co_freevars` 列出变量名。`make_multiplier` 返回后，它的栈帧随之销毁，但 `factor`/`prefix` 的值被 cell 保留，因为 `double`（闭包）还引用着这些 cell。**只要闭包对象还被引用，cell 及其指向的对象就不会被垃圾回收**；闭包一旦不再被引用，cell 随之回收。反过来，一个长生命周期的闭包会一直持有它捕获的对象（例如捕获了整份配置或大数据集），迟迟不释放就是隐式的内存占用。
+
+**经典陷阱——晚绑定**：循环里创建的闭包共享同一个 cell，导致都读到循环结束后的值：
+
+```python
+funcs = [lambda: i for i in range(3)]
+[f() for f in funcs]   # [2, 2, 2]，不是 [0, 1, 2]
+```
+
+三个 lambda 捕获的是同一个 `i` cell，循环结束后 `i` 停在 2。修法是在创建时把值固化进默认参数 `lambda i=i: i`，或用工厂函数 `make(i)` 让每个闭包各持有一个独立 cell。
+
+**实际用途**：闭包主要做两件事——**保存状态**（不用类、不用全局变量就能造一个带记忆的函数，如计数器）和**传递依赖**（把 logger、数据库连接、配置捕获进函数，之后调用方无需再传）。这两件事正是装饰器能成立的基础：装饰器返回的 wrapper 就是一个闭包。
+
 #### 装饰器
 
-**装饰器函数**是一个接受一个函数作为输入，并返回一个新函数的函数。
+**装饰器函数**是一个接受一个函数作为输入，并返回一个新函数的函数。`@provider` 写在 `def mysql_provider():` 上面，等价于 `mysql_provider = provider(mysql_provider)`，是赋值语句的语法糖。
 
-```Python
+```python
+import functools
+
 def provider(fn):
-    def exec():
-        log.info("---开始执行---")
-        fn()
-        log.info("---执行完成---")
-    return exec
-    
+    @functools.wraps(fn)
+    def wrapper(*args, **kwargs):
+        log.info('---开始执行---')
+        result = fn(*args, **kwargs)
+        log.info('---执行完成---')
+        return result
+    return wrapper
+
 @provider
 def mysql_provider():
     pass
 ```
+
+**装饰器的本质是「给函数增加额外行为」**：返回的 `wrapper` 是一个闭包，它捕获了原函数 `fn` 这个自由变量，所以能在调用 `fn` 前后插入逻辑，并把返回值原样传回。因为 `wrapper` 是闭包，它还能**记住状态**——这是装饰器相对「手动包一层调用」的关键优势：
+
+```python
+def count_calls(fn):
+    calls = 0                       # 闭包状态，多次调用之间保持
+    @functools.wraps(fn)
+    def wrapper(*args, **kwargs):
+        nonlocal calls
+        calls += 1
+        print(f'{fn.__name__} 被调用 {calls} 次')
+        return fn(*args, **kwargs)
+    return wrapper
+```
+
+`calls` 既不是全局变量、也没放进类，而是由 `wrapper` 这个闭包持有，每次调用累加、下次调用还能读到。
+
+**实际用途**：
+
+- **横切关注点**：日志、计时/性能统计、重试、异常上报——这些「与业务无关但每个函数都要做」的事，用装饰器抽出来，避免在每个函数里复制粘贴。
+- **缓存/记忆化**：`@functools.lru_cache` 按参数缓存返回值；自定义版本本质就是「用闭包保存一个 dict」。
+- **注册机制**：装饰器把被装饰对象登记进一个集合（如 Flask 的 `@app.route`、插件注册表），实现「定义即注册」。
+- **校验/鉴权**：在 `wrapper` 里做参数校验、权限判断，通过后再调 `fn`。
+
+两个容易踩的坑：
+
+- **忘 `@functools.wraps(fn)`**：不加的话 `wrapper` 的 `__name__`/`__doc__`/`__qualname__` 是 wrapper 自己的，日志、框架内省、序列化会看到错误的名字，排查时「函数名对不上」。`wraps` 就是把这些元数据从 `fn` 拷贝过来。
+- **带参数的装饰器需要再包一层**：`@decorator(arg)` 实际是先调用 `decorator(arg)` 返回一个真正的装饰器，所以写法是三层嵌套（外层收参数、中层收函数、内层才是 wrapper）。别把「收参数的工厂」和「收函数的装饰器」混成一层。
 
 #### 字符串操作
 
