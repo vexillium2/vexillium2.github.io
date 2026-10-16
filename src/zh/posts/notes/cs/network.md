@@ -554,6 +554,8 @@ close()        关闭（对应前面四次挥手）
 
 两个必须分清的概念：**监听 socket 只负责"接受新连接"，连接 socket 才承载具体的数据流**；服务端 accept 出来的每个连接 socket 代表一个四元组（源 IP:端口 → 目的 IP:端口）。`accept` 与 `read` 默认都是**阻塞**的——没有新连接/没有数据时，线程被挂起，这正是后面所有 IO 模型问题的起点。
 
+更多细节参考[Beej's Guide to Network Programming](https://beej.us/guide/bgnet/html/)
+
 ### 五种 IO 模型：等待方式的一次全景 🔥
 
 从应用进程的角度，一次网络读可以拆成**两个阶段**：
@@ -1036,6 +1038,7 @@ HTTP/1.x 的报文是**纯文本**的：请求行（方法 + 路径 + 版本）�
 - **301 / 302 / 307 / 308**：核心区别是**是否永久**与**是否保留方法**。301 永久重定向（**会被浏览器与中间层缓存**，一旦配错很难让客户端回心转意）、302 临时重定向；历史上 302 允许把 POST 改成 GET，于是规范补出 307/308 表示"保持原方法重放"；
 - **304 Not Modified**：配合条件请求（`If-None-Match` / `If-Modified-Since`）的结果，表示"资源没变，用你本地缓存"——这是缓存协商能省流量的关键；
 - **401 vs 403**：401 是**未认证**（没带凭证或凭证无效，通常带 `WWW-Authenticate` 提示如何认证）；403 是**已认证但无权限**。把 403 用成 401 会让客户端做出错误的重登录行为，这是接口设计的常见错误；
+- **404 Not Found**：表示客户端请求的资源找不到
 - **429 Too Many Requests**：被限流，规范上应带 `Retry-After` 告诉客户端何时可重试；
 - **500 / 502 / 503 / 504**：这是生产排查最高频的一组。500 是服务端内部异常；**502 是网关从上游收到了无效响应**（上游崩溃、协议错误、连接被重置）；**503 是服务暂时不可用**（过载、维护，通常带 `Retry-After`）；**504 是网关等待上游超时**。502 说明"连上了但对方返回的东西不对"，504 说明"压根没等到回复"——根因方向完全不同，这一组必须分清。
 
@@ -1060,7 +1063,22 @@ HTTP/1.x 的报文是**纯文本**的：请求行（方法 + 路径 + 版本）�
 
 ### WebSocket：从请求-响应到全双工长连接
 
-HTTP 是客户端发起的请求-响应模型，服务端无法主动推送。WebSocket 用一次 HTTP 请求完成**协议升级**（`Upgrade: websocket` + `Connection: Upgrade`），握手成功后同一条 TCP 连接变成**全双工**通道，双方可随时互发消息，且帧头开销很小。
+HTTP 是客户端发起的请求-响应模型，服务端无法主动推送，WebSocket 的出现实现了 TCP 连接上的全双工通信。两者都依赖 TCP 协议，并且为了兼容性，WebSocket 也使用 80 与 443 端口。WebSocket 用一次 HTTP 请求完成**协议升级**（`Upgrade: websocket` + `Connection: Upgrade`），握手成功后同一条 TCP 连接变成**全双工**通道，双方可随时互发消息，且帧头开销很小。
+
+一个典型的 WebSocket 握手请求如下：
+
+```Plain Text
+GET /chat HTTP/1.1
+Host: server.example.com
+Upgrade: websocket
+Connection: Upgrade
+Sec-WebSocket-Key: dGhlIHNhbXBsZSBub25jZQ==
+Origin: http://example.com
+Sec-WebSocket-Protocol: chat, superchat
+Sec-WebSocket-Version: 13
+```
+
+
 
 选择长连接方案时的边界：
 
