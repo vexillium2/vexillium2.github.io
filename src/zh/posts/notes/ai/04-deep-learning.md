@@ -1,7 +1,7 @@
 ---
 lang: zh-CH
 title: 深度学习：从反向传播到 Transformer
-description: 以「一次训练迭代发生了什么」为主线，从表示学习、计算图与反向传播讲到归一化、卷积、序列建模、注意力与规模，并说明每种结构假设的边界
+description: 以「一次训练迭代发生了什么」为主线，从表示学习、计算图与反向传播讲到归一化、卷积、序列建模、注意力与规模，并配有验证机制的 PyTorch 代码
 date: 2026-10-12
 category:
   - 人工智能
@@ -28,7 +28,7 @@ tag:
 - **数学工具**（矩阵微分、链式法则、凸性、泰勒展开）在数学笔记。
 - **应用层工程**（RAG、Agent、服务化部署）在 LLM 应用工程笔记；这里只保留训练与推理的机制约束。
 
-每个知识块使用固定的块标签——**定义 / 性质 / 推导 / 例 / 注意 / 小结**——按需出现。
+每个知识块使用固定的块标签——**定义 / 性质 / 推导 / 例 / 注意 / 小结**——按需出现。代码片段使用 PyTorch，行尾注释给出形状；它们用来验证机制，不是 API 手册。
 
 [[toc]]
 
@@ -166,6 +166,23 @@ $$Z = XW^{\top} + \mathbf{1}b^{\top}, \qquad A = f(Z)$$
 - 偏置可以吸收进权重：给 $x$ 补一个恒为 1 的分量，$b$ 就并进 $w$。公式更短，但代码里通常分开写，便于初始化。
 - 参数量与 batch 无关。batch 只影响计算并行度与梯度噪声，不影响模型容量。
 
+把形状约定写成代码：一个 batch 的输入是 $(N, d_{\text{in}})$，权重是 $(d_{\text{out}}, d_{\text{in}})$，偏置在最后一维广播。
+
+```python
+import torch
+
+torch.manual_seed(0)
+x = torch.randn(3, 4)            # (N, d_in) = (3, 4)
+w = torch.randn(3, 4)            # (d_out, d_in) = (3, 4)
+b = torch.randn(3)               # (d_out,)
+
+z = x @ w.T + b                  # (3, 4) @ (4, 3) -> (3, 3)
+print(z.shape)                   # torch.Size([3, 3])
+print(b.expand_as(z).shape)      # 广播不复制数据，只在计算时对齐
+```
+
+代码里的转置不是装饰：PyTorch 的线性层把权重存成 $(d_{\text{out}}, d_{\text{in}})$，所以前向要写 $xW^{\top}$，而不是 $Wx$。形状对不上时，报错信息里的两个尺寸就是这两个约定。
+
 **小结**
 
 一层网络就是一次仿射变换加一次逐元素非线性。深与浅的差别，在于这样的变换叠了几次。
@@ -267,6 +284,36 @@ $$\frac{\partial \ell}{\partial W^l} = \delta^l \left(a^{l-1}\right)^{\top}, \qq
 - 误差信号 $\delta$ 是"这个神经元的预激活变化一点，损失会变多少"。它同时承担两个职责：更新本层参数、把信号传给前一层。
 - ReLU 的掩码必须用前向保存的 $z^l$，不能用 $a^l$ 重新判断（$a^l = 0$ 既可能来自 $z < 0$，也可能来自 $z = 0$）。
 - batch 维度上，$\delta$ 是矩阵，参数梯度是对 batch 求平均或求和。求平均让梯度尺度与 batch 大小解耦。
+
+上面的梯度公式可以用一次反向传播直接验证：交叉熵对 logits 的梯度就是 $p - y$。
+
+```python
+import torch
+import torch.nn.functional as F
+
+torch.manual_seed(0)
+x = torch.randn(3, 4)
+y = torch.tensor([0, 2, 1])          # 类别下标，dtype 必须是 long
+
+linear = torch.nn.Linear(4, 3)
+logits = linear(x)                   # (3, 3)
+loss = F.cross_entropy(logits, y)    # 标量
+loss.backward()
+
+with torch.no_grad():
+    p = logits.softmax(dim=1)                       # (3, 3)
+    onehot = F.one_hot(y, num_classes=3).float()
+    manual = ((p - onehot).T @ x) / x.shape[0]      # (3, 4)
+    print(torch.allclose(manual, linear.weight.grad, atol=1e-6))  # True
+
+opt = torch.optim.AdamW(linear.parameters(), lr=1e-2)
+opt.zero_grad()                      # 不清零，梯度会与上一次累加
+loss = F.cross_entropy(linear(x), y)
+loss.backward()
+opt.step()
+```
+
+这段代码同时说明了两件事：手推的 $p - y$ 与框架算出的梯度一致；一次完整的参数更新由 **zero_grad → backward → step** 三步组成，顺序错了就会累加梯度或更新到旧值。
 
 **小结**
 
@@ -441,6 +488,31 @@ $$\mathbb{E}\left[\frac{m}{1-p}h\right] = h$$
 - 数据规模上来之后，Dropout 的收益迅速下降；大模型预训练通常不用 Dropout。
 - 推理时忘记切模式，会把随机性带进线上。
 
+训练与推理的两套行为可以直接观察：BN 的统计量在 train 时更新，Dropout 在 eval 时退化为恒等映射。
+
+```python
+import torch
+
+bn = torch.nn.BatchNorm1d(4)
+drop = torch.nn.Dropout(p=0.5)
+x = torch.randn(8, 4)                # (N, C) = (8, 4)
+
+bn.train()
+out_train = bn(x)                    # 用当前 batch 统计量，并更新 running stats
+print(bn.running_mean.shape)         # (4,)
+
+bn.eval()
+out_eval = bn(x)                     # 用 running_mean / running_var
+print(torch.allclose(out_train, out_eval))   # False：两套行为不同
+
+drop.train()
+print((drop(x) == 0).float().mean()) # 约 0.5 的元素被置零
+drop.eval()
+print(torch.equal(drop(x), x))       # True：推理时不做任何事
+```
+
+把这段代码与线上事故对照：忘了调用 eval()，BN 会用单个样本的统计量归一化，Dropout 会继续随机置零——训练时看不出来，推理时结果每次都不同。
+
 **小结**
 
 Dropout 用随机性换泛化。它的实现细节（缩放位置、与 BN 的顺序）比"加不加"更影响结果。
@@ -612,6 +684,29 @@ $N$ 是输入边长，$F$ 是核边长，$P$ 是 padding，$S$ 是 stride。
 - padding 引入的零会影响边缘统计，BN 在小特征图上对边缘尤其敏感。
 - 公式里的下取整意味着：输入尺寸不匹配时，最后一行/列会被丢弃。
 
+卷积层的形状、参数量与乘加次数都能从超参数直接算出来，不需要打印整个模型。
+
+```python
+import torch
+import torch.nn as nn
+
+conv = nn.Conv2d(in_channels=3, out_channels=10, kernel_size=5, stride=1, padding=2)
+x = torch.randn(8, 3, 32, 32)        # (N, C, H, W)
+y = conv(x)                          # (8, 10, 32, 32)
+print(y.shape)
+
+params = sum(p.numel() for p in conv.parameters())
+print(params)                        # (3*5*5 + 1) * 10 = 760
+
+macs = y.shape[0] * y.shape[2] * y.shape[3] * 10 * (3 * 5 * 5)
+print(macs)                          # 8 * 32 * 32 * 10 * 75 = 6,144,000
+
+pointwise = nn.Conv2d(64, 128, kernel_size=1)                       # 只混合通道
+depthwise = nn.Conv2d(64, 64, kernel_size=3, padding=1, groups=64)  # 每通道单独卷积
+```
+
+参数量的公式是 $(C_{\text{in}} \cdot k^2 + 1) \cdot C_{\text{out}}$，乘加次数再乘上输出图的空间尺寸。$1 \times 1$ 卷积与 depthwise 卷积改变的是这两个因子的结构，不是卷积的定义。
+
 **小结**
 
 stride 与 padding 是控制空间分辨率的两个旋钮。它们不改变卷积的假设，只改变信息流过的粒度。
@@ -732,6 +827,26 @@ $$\tilde{h}_t = \tanh\left(W [r_t \odot h_{t-1}; x_t]\right), \qquad h_t = (1 - 
 - LSTM 与 GRU 的表现差异通常小于超参数与初始化带来的差异。选择依据是参数量、序列长度与训练成本。
 - 门控的值在 0 到 1 之间，饱和时梯度仍然小；层归一化与更好的初始化对深层 RNN 同样重要。
 
+循环层的形状约定是固定的：输入 $(N, L, d_{\text{in}})$，输出 $(N, L, d_{\text{out}})$，状态按层数分组。
+
+```python
+import torch
+import torch.nn as nn
+
+lstm = nn.LSTM(input_size=16, hidden_size=32, num_layers=2, batch_first=True)
+x = torch.randn(4, 7, 16)            # (N, L, d_in)
+out, (h_n, c_n) = lstm(x)
+
+print(out.shape)                     # (4, 7, 32)：每个时间步的隐状态
+print(h_n.shape)                     # (2, 4, 32)：每层的最终隐状态
+print(c_n.shape)                     # (2, 4, 32)：每层的细胞状态
+
+step_out, (h_n, c_n) = lstm(torch.randn(4, 1, 16), (h_n, c_n))
+print(step_out.shape)                # (4, 1, 32)：逐 token 生成
+```
+
+逐 token 生成时只喂一个时间步，并把上一步的 $(h, c)$ 传回去。这行代码就是"状态沿时间传递"的字面写法；注意力取消了它，也就取消了这份需要手动维护的状态。
+
 **小结**
 
 LSTM 用加法路径保护记忆，GRU 用两个门做同样的取舍。它们把"能记多久"从固定衰减变成可学习的参数。
@@ -796,6 +911,34 @@ $$\mathrm{head}_i = \mathrm{Attention}(QW_i^Q, KW_i^K, VW_i^V), \qquad \mathrm{M
 - 掩码必须在 softmax 之前加，且用很大的负数而不是零，否则 softmax 仍会分到概率。
 - 缩放因子是 $\sqrt{d_k}$，不是 $\sqrt{d}$。多头里 $d_k = d/h$。
 - 注意力的复杂度是 $O(n^2 d)$：序列长度平方增长。长文本的瓶颈在这里，不在参数量。
+
+注意力的四步——打分、缩放、掩码、加权——可以直接写成矩阵运算。
+
+```python
+import torch
+
+def attention(q, k, v, mask=None):
+    d_k = q.size(-1)
+    scores = q @ k.transpose(-2, -1) / d_k ** 0.5   # (N, Lq, Lk)
+    if mask is not None:
+        scores = scores.masked_fill(mask, float("-inf"))
+    weights = scores.softmax(dim=-1)                 # 每行和为 1
+    return weights @ v, weights
+
+q = torch.randn(1, 4, 8)             # 一个句子、4 个 token、8 维
+k = v = q
+
+causal = torch.triu(torch.ones(4, 4), diagonal=1).bool()
+out, w = attention(q, k, v, mask=causal)
+print(w[0, 0])                       # [1, 0, 0, 0]：只能看到自己
+print(w[0, 3])                       # 能看到全部四个位置
+
+mha = torch.nn.MultiheadAttention(embed_dim=8, num_heads=2, batch_first=True)
+out, _ = mha(q, k, v, attn_mask=causal)
+print(out.shape)                     # (1, 4, 8)
+```
+
+掩码在 softmax 之前生效，被遮住的位置权重为零而不是"很小"；如果在 softmax 之后乘零，分母仍然包含它们，权重之和就不再是 1。
 
 **小结**
 
@@ -954,6 +1097,24 @@ $$N_{\text{opt}} \propto C^{0.5}, \qquad D_{\text{opt}} \propto C^{0.5}$$
 - 奖励模型会被"刷分"（reward hacking）：策略找到奖励模型的高分区域，但人类并不认可。
 - KL 惩罚是必要的：没有它，策略会退化成奖励模型的对抗样本。
 
+后训练的监督微调仍然是交叉熵，只是要跳过 padding 位。
+
+```python
+import torch
+import torch.nn.functional as F
+
+logits = torch.randn(2, 5, 100)      # (N, L, V)
+targets = torch.tensor([[3, 7, 9, 2, 0],
+                        [5, 1, 4, 2, 0]])
+targets[:, -1] = -100                # padding 位不参与损失
+
+# 实际训练时 targets 由 input_ids 右移一位得到，这里省略移位
+loss = F.cross_entropy(logits.transpose(1, 2), targets, ignore_index=-100)
+print(loss.item())
+```
+
+形状是 $(N, V, L)$ 而不是 $(N, L, V)$：交叉熵要求类别维在中间。这个转置是 PyTorch 里最常见的形状错误之一，报错信息通常会指出维度不匹配。
+
 **小结**
 
 预训练给能力，后训练给行为。后训练的天花板由预训练决定，奖励模型的质量决定它能不能被正确引导。
@@ -970,7 +1131,7 @@ $$\text{bytes} = 2 \times L \times n_{\text{kv}} \times d_{\text{head}} \times n
 
 **例**
 
-32 层、32 个 KV 头、每头 128 维、序列 8192、batch 1、fp16（2 字节）：$2 \times 32 \times 32 \times 128 \times 8192 \times 2 \approx 4.3$ GB。上下文翻倍，缓存翻倍。
+32 层、32 个 KV 头、每头 128 维、序列 8192、batch 1、fp16（2 字节）：$2 \times 32 \times 32 \times 128 \times 8192 \times 2 \approx 4.3$ GB，即 4.0 GiB。上下文翻倍，缓存翻倍。
 
 **性质（显存与带宽）**
 
@@ -983,6 +1144,20 @@ $$\text{bytes} = 2 \times L \times n_{\text{kv}} \times d_{\text{head}} \times n
 - KV cache 是长上下文成本的主要来源。GQA/MQA 通过减少 $n_{\text{kv}}$ 直接降低缓存。
 - 量化对困惑度的影响小，对长尾知识的影响可能很大；评测要覆盖事实性任务。
 - 批处理提高吞吐，但每个请求的缓存都要占显存，batch 与上下文长度互相挤占。
+
+KV cache 的显存可以从超参数直接估算，GQA 的收益也在同一个式子里。
+
+```python
+def kv_cache_gib(layers, n_kv_heads, head_dim, tokens, batch=1, bytes_per=2):
+    total = 2 * layers * n_kv_heads * head_dim * tokens * batch * bytes_per
+    return total / 1024 ** 3
+
+print(kv_cache_gib(32, 32, 128, 8192))   # 4.0 GiB：32 个 KV 头
+print(kv_cache_gib(32, 8, 128, 8192))    # 1.0 GiB：GQA，8 组 KV
+print(kv_cache_gib(32, 8, 128, 32768))   # 4.0 GiB：上下文翻四倍
+```
+
+系数 2 来自 K 与 V 各一份。这个估算不含激活、临时缓冲区与碎片，实际占用会更高；但量级决定了长上下文能不能跑、并发能开多少。
 
 **小结**
 
