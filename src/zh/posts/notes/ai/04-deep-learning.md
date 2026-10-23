@@ -27,6 +27,7 @@ tag:
 - **语言的结构、分词、词表示与预训练目标**在自然语言处理笔记；这里只讲网络机制，不讲语言对象。
 - **数学工具**（矩阵微分、链式法则、凸性、泰勒展开）在数学笔记。
 - **应用层工程**（RAG、Agent、服务化部署）在 LLM 应用工程笔记；这里只保留训练与推理的机制约束。
+- **工程流程、GPU 与多卡、迁移学习、视觉任务与部署**在深度学习实践笔记；这里只讲机制，不重复工程步骤。
 
 每个知识块使用固定的块标签——**定义 / 性质 / 推导 / 例 / 注意 / 小结**——按需出现。代码片段使用 PyTorch，行尾注释给出形状；它们用来验证机制，不是 API 手册。
 
@@ -206,6 +207,27 @@ $z = x \cdot y$ 的局部导数是 $\partial z/\partial x = y$、$\partial z/\pa
 - 计算图不唯一。同一个函数可以拆成不同的节点粒度，粒度越细，局部导数越简单，但图越大。
 - 前向必须保存反向需要的中间量（激活值、掩码）。显存占用主要来自这些缓存，不是参数本身。
 
+计算图不是比喻：每个张量都记着自己由谁算出，梯度只在 requires_grad 为真的路径上传播。
+
+```python
+import torch
+
+x = torch.tensor([2.0], requires_grad=True)
+y = torch.tensor([3.0], requires_grad=True)
+z = x * y + x                 # z = xy + x
+z.retain_grad()               # 非叶节点的梯度默认不保留
+z.backward()
+
+print(x.grad)                 # dz/dx = y + 1 = 4
+print(y.grad)                 # dz/dy = x = 2
+print(z.grad)                 # 1.0：输出节点的梯度
+
+w = (x * 2).detach()          # detach 切断梯度，w 不再追踪 x
+print(w.requires_grad)        # False
+```
+
+detach 与 no_grad 的区别在用途：detach 造一个不带梯度的张量，no_grad 让一段计算不建图。前者常用于冻结目标、截断时间反向传播；后者用于推理与参数更新。
+
 **小结**
 
 计算图把"求导"变成了"按图传播"。框架自动微分的全部工作，就是记录前向、按逆序调用局部导数。
@@ -314,6 +336,32 @@ opt.step()
 ```
 
 这段代码同时说明了两件事：手推的 $p - y$ 与框架算出的梯度一致；一次完整的参数更新由 **zero_grad → backward → step** 三步组成，顺序错了就会累加梯度或更新到旧值。
+
+把同样的网络写成 nn.Module，参数从哪来、怎么交给优化器，就一目了然了。
+
+```python
+import torch
+import torch.nn as nn
+
+class TwoLayer(nn.Module):
+    def __init__(self, d_in, d_hidden, d_out):
+        super().__init__()
+        self.fc1 = nn.Linear(d_in, d_hidden)
+        self.fc2 = nn.Linear(d_hidden, d_out)
+
+    def forward(self, x):
+        return self.fc2(torch.relu(self.fc1(x)))
+
+model = TwoLayer(4, 8, 3)
+print(sum(p.numel() for p in model.parameters()))   # 4*8+8 + 8*3+3 = 67
+
+for name, p in model.named_parameters():
+    print(name, tuple(p.shape))   # fc1.weight (8, 4) / fc1.bias (8) ...
+
+optimizer = torch.optim.AdamW(model.parameters(), lr=1e-3)
+```
+
+parameters() 只返回需要梯度的参数，named_parameters() 多给一个名字。优化器拿到的必须是同一批张量；重新赋值 model.fc1 = nn.Linear(...) 之后要重建优化器，否则它还在更新旧对象。
 
 **小结**
 
@@ -571,6 +619,29 @@ $$\mathrm{Var}(W) = \frac{2}{n_{\text{in}}}$$
 - 偏置通常初始化为零，某些激活（如 ReLU）可以用小的正数，降低死亡概率。
 - 初始化与归一化有重叠：有 BN/LN 时，初始化的敏感度下降，但仍影响训练早期。
 
+初始化的作用可以量出来：同一批数据，只改权重的标准差，看十层之后的激活尺度。
+
+```python
+import torch
+import torch.nn as nn
+
+def activation_std(w_std, depth=10):
+    net = nn.Sequential(*[m for _ in range(depth) for m in (nn.Linear(256, 256), nn.ReLU())])
+    for layer in net:
+        if isinstance(layer, nn.Linear):
+            nn.init.normal_(layer.weight, std=w_std)
+            nn.init.zeros_(layer.bias)
+    x = torch.randn(512, 256)
+    with torch.no_grad():
+        return net(x).std().item()
+
+print(activation_std(0.01))    # 约 1e-8：信号几乎消失
+print(activation_std(0.088))   # 约 1：He 初始化，sqrt(2/256)
+print(activation_std(0.2))     # 数百：信号被逐层放大
+```
+
+He 初始化的标准差是 $\sqrt{2/n_{\text{in}}}$，Xavier 是 $\sqrt{2/(n_{\text{in}}+n_{\text{out}})}$。两者的差别来自 ReLU 把负半轴截断、方差减半这件事。
+
 **小结**
 
 初始化决定第一次前向与反向的信号尺度。它不改变模型的表达力，只改变优化能不能启动。
@@ -594,6 +665,29 @@ $$x \leftarrow x + \mathrm{Attention}(\mathrm{LN}(x)), \qquad x \leftarrow x + \
 
 - 块内的顺序不是任意排列。把 FFN 放在注意力之前、把归一化放在残差之后，都会改变训练稳定性。
 - 现代 LLM 的结构是在这个块上做替换：LN 换 RMSNorm、ReLU 换 SwiGLU、绝对位置换 RoPE、多头换 GQA。替换的是部件，不是块的骨架。
+
+Pre-LN 块的顺序在代码里只有一行：归一化、子层、残差相加。
+
+```python
+import torch
+import torch.nn as nn
+
+class PreLNBlock(nn.Module):
+    def __init__(self, d, hidden):
+        super().__init__()
+        self.ln = nn.LayerNorm(d)
+        self.mlp = nn.Sequential(
+            nn.Linear(d, hidden), nn.GELU(), nn.Linear(hidden, d)
+        )
+
+    def forward(self, x):
+        return x + self.mlp(self.ln(x))   # 残差路径始终是恒等
+
+x = torch.randn(2, 7, 32)                 # (N, L, d)
+print(PreLNBlock(32, 128)(x).shape)       # (2, 7, 32)
+```
+
+把 return 改成 self.ln(x + self.mlp(x)) 就是 Post-LN。深层的稳定性差异就来自这个括号的位置：Pre-LN 让残差路径上没有归一化，梯度可以直通。
 
 **小结**
 
@@ -847,6 +941,27 @@ print(step_out.shape)                # (4, 1, 32)：逐 token 生成
 
 逐 token 生成时只喂一个时间步，并把上一步的 $(h, c)$ 传回去。这行代码就是"状态沿时间传递"的字面写法；注意力取消了它，也就取消了这份需要手动维护的状态。
 
+变长序列必须打包，否则补齐的零会被当成真实输入，污染最后的状态。
+
+```python
+import torch
+import torch.nn as nn
+from torch.nn.utils.rnn import pack_padded_sequence, pad_packed_sequence
+
+lengths = torch.tensor([4, 3, 1])          # batch 内三条序列的真实长度
+x = torch.randn(3, 4, 8)                   # (N, L, d)，短序列已补零
+
+packed = pack_padded_sequence(x, lengths, batch_first=True, enforce_sorted=False)
+lstm = nn.LSTM(8, 16, batch_first=True)
+out_packed, (h, c) = lstm(packed)
+out, out_lengths = pad_packed_sequence(out_packed, batch_first=True)
+
+print(out.shape)        # (3, 4, 16)
+print(h.shape)          # (1, 3, 16)：每个样本只累加自己的真实长度
+```
+
+不打包时，LSTM 会把补齐位置也算进状态，短句的最终状态被零稀释；enforce_sorted=False 让打包前不必先按长度排序。
+
 **小结**
 
 LSTM 用加法路径保护记忆，GRU 用两个门做同样的取舍。它们把"能记多久"从固定衰减变成可学习的参数。
@@ -1065,6 +1180,24 @@ $$N_{\text{opt}} \propto C^{0.5}, \qquad D_{\text{opt}} \propto C^{0.5}$$
 - 预训练的目标函数很简单，难点在数据与稳定性。损失尖峰（loss spike）通常来自数据异常或学习率过大。
 - 数据配比没有普适最优。代码比例高会提升推理，但可能损害自然语言流畅度。
 - 训练成本主要在注意力与前向/反向的矩阵乘，通信开销在分布式训练里不可忽略。
+
+混合精度省的是显存与带宽，代价是数值范围。一次前向就能看出 dtype 与误差量级。
+
+```python
+import torch
+
+x = torch.randn(1024, 1024, device="cuda")
+w = torch.randn(1024, 1024, device="cuda")
+
+with torch.autocast(device_type="cuda", dtype=torch.float16):
+    y16 = x @ w                 # 矩阵乘在 fp16 下执行
+y32 = x @ w                     # 走出 autocast，回到 fp32
+
+print(y16.dtype)                # torch.float16
+print((y16.float() - y32).abs().max())   # 误差量级，约 1e-2
+```
+
+fp16 的指数位少，梯度容易下溢，所以要用 GradScaler 放大 loss；bf16 的指数位与 fp32 相同，范围够大，通常不需要缩放。选哪一个取决于硬件支持，不是精度越高越好。
 
 **小结**
 
