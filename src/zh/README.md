@@ -10,8 +10,8 @@ heroAlt: 👨‍💻
 heroText: blog of vexillium
 tagline: continual learning
 heroFullScreen: true
-bgImage: https://raw.githubusercontent.com/neverbiasu/blog/refs/heads/main/src/.vuepress/public/assets/images/cover-light.jpg
-bgImageDark: https://raw.githubusercontent.com/neverbiasu/blog/refs/heads/main/src/.vuepress/public/assets/images/cover-dark.jpg
+bgImage: /assets/images/arkcover1.png
+bgImageDark: /assets/images/arkcover3.png
 actions:
   - text: blog
     link: ./home
