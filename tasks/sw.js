@@ -1,6 +1,6 @@
 /* 任务面板 手机版 Service Worker
    只缓存外壳；数据在 IndexedDB，不经过 SW。更新部署时把 CACHE 版本 +1。 */
-const CACHE = 'tp-mobile-v1';
+const CACHE = 'tp-mobile-v2';
 const ASSETS = [
   './',
   './index.html',
