@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="zh-CN" data-bg="fuji">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>任务面板 · 手机版</title>
+<meta name="theme-color" content="#0b0e14" />
+<meta name="mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+<link rel="manifest" href="manifest.webmanifest" />
+<link rel="apple-touch-icon" href="icons/icon-192.png" />
+<link rel="stylesheet" href="dshell.css" />
+<link rel="stylesheet" href="task-panel.css" />
+<link rel="stylesheet" href="mobile.css" />
+</head>
+<body>
+<div id="tpBg"></div>
+<div class="dshell">
+  <div class="tpHead">
+    <div>
+      <div class="tpSmall tpBrand">任务面板 · 手机版</div>
+      <div class="tpClock" id="tpClock">--:--:--</div>
+      <div class="tpClockDate" id="tpClockDate">载入中…</div>
+    </div>
+    <div class="tpRow">
+      <span class="dshell-badge" id="saveChip">载入中…</span>
+      <button class="dshell-btn dshell-btnGhost" data-act="picker">加入今日</button>
+      <button class="dshell-btn" data-act="toggleAdd">＋ 新任务</button>
+    </div>
+  </div>
+
+  <div id="activeBar"></div>
+
+  <div class="dshell-tabs" id="tabs">
+    <button class="dshell-tab" data-act="tab" data-v="today">今日</button>
+    <button class="dshell-tab" data-act="tab" data-v="all">全部</button>
+    <button class="dshell-tab" data-act="tab" data-v="metrics">指标</button>
+    <button class="dshell-tab" data-act="tab" data-v="settings">设置</button>
+  </div>
+
+  <div id="addForm"></div>
+  <div id="view"></div>
+</div>
+
+<div class="tpModalWrap" id="modalWrap"><div class="tpModal" id="modalBody"></div></div>
+<div class="tpToastWrap" id="toastWrap"></div>
+<div class="tpCelebrate" id="celebrate"><div class="tpCelebrateBox" id="celebrateBox"></div></div>
+<input type="file" id="mobileImportFile" accept="application/json,.json" style="display:none" />
+
+<script>window.__TP_MOBILE__=true;</script>
+<script src="task-panel.js"></script>
+<script>
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', function () {
+    navigator.serviceWorker.register('sw.js', { scope: './' }).catch(function () {});
+  });
+}
+</script>
+</body>
+</html>
