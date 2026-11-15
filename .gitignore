@@ -5,4 +5,11 @@ src/.vuepress/.cache/
 src/.vuepress/.temp/
 src/.vuepress/dist/
 
-.agents/
+# Project skills and formal handoffs are versioned; local drafts and runtime state stay private.
+.agents/*
+!.agents/skills/
+!.agents/skills/**
+!.agents/handoffs/
+.agents/handoffs/*
+!.agents/handoffs/astro-rebuild-prd.md
+!.agents/handoffs/astro-rebuild-changelog.md
