@@ -13,3 +13,6 @@ src/.vuepress/dist/
 .agents/handoffs/*
 !.agents/handoffs/astro-rebuild-prd.md
 !.agents/handoffs/astro-rebuild-changelog.md
+src/.vuepress/public/tasks/
+tasktable-data.json
+projects/task-panel/tests/local/

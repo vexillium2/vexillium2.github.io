@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="zh-CN" data-bg="fuji">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>任务面板 · 专注控制室</title>
+<link rel="stylesheet" href="/api/worktable/template/dshell.css" />
+<link rel="stylesheet" href="task-panel.css" />
+</head>
+<body>
+<div id="tpBg"></div>
+<div class="dshell">
+  <div class="tpHead">
+    <div>
+      <div class="tpSmall tpBrand">任务面板 · 专注控制室</div>
+      <div class="tpClock" id="tpClock">--:--:--</div>
+      <div class="tpClockDate" id="tpClockDate">载入中…</div>
+    </div>
+    <div class="tpRow">
+      <span class="dshell-badge" id="saveChip">载入中…</span>
+      <button class="dshell-btn dshell-btnGhost" data-act="picker">加入今日</button>
+      <button class="dshell-btn" data-act="toggleAdd">＋ 新任务</button>
+    </div>
+  </div>
+
+  <div id="activeBar"></div>
+
+  <div class="dshell-tabs" id="tabs">
+    <button class="dshell-tab" data-act="tab" data-v="today">今日</button>
+    <button class="dshell-tab" data-act="tab" data-v="all">全部任务</button>
+    <button class="dshell-tab" data-act="tab" data-v="metrics">指标</button>
+    <button class="dshell-tab" data-act="tab" data-v="settings">设置</button>
+  </div>
+
+  <div id="addForm"></div>
+  <div id="view"></div>
+</div>
+
+<div class="tpModalWrap" id="modalWrap"><div class="tpModal" id="modalBody"></div></div>
+<div class="tpToastWrap" id="toastWrap"></div>
+<div class="tpCelebrate" id="celebrate"><div class="tpCelebrateBox" id="celebrateBox"></div></div>
+
+<script src="task-panel.js"></script>
+</body>
+</html>

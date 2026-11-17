@@ -1,0 +1,63 @@
+{
+  "version": 2,
+  "updatedAt": "2026-11-01T00:00:00.000Z",
+  "settings": { "targetWake": "09:00", "targetSleep": "01:30", "bg": "fuji" },
+  "tasks": [
+    {
+      "id": "__entertainment__",
+      "title": "娱乐时间",
+      "description": "固定计时项",
+      "deadline": null,
+      "deadlineKind": "soft",
+      "estimateMin": 0,
+      "actualMin": 0,
+      "distractedMin": 0,
+      "sessions": [],
+      "state": "doing",
+      "parentId": null,
+      "priorityOverride": null,
+      "kind": "entertainment",
+      "createdAt": "2026-11-01T00:00:00.000Z"
+    },
+    {
+      "id": "demo-a",
+      "title": "示例任务 A",
+      "description": "脱敏样例",
+      "deadline": null,
+      "deadlineKind": "soft",
+      "estimateMin": 60,
+      "actualMin": 0,
+      "distractedMin": 0,
+      "sessions": [],
+      "state": "doing",
+      "parentId": null,
+      "priorityOverride": null,
+      "createdAt": "2026-11-01T00:00:00.000Z"
+    },
+    {
+      "id": "demo-b",
+      "title": "示例任务 B",
+      "description": "A 的子任务",
+      "deadline": null,
+      "deadlineKind": "soft",
+      "estimateMin": 30,
+      "actualMin": 0,
+      "distractedMin": 0,
+      "sessions": [],
+      "state": "doing",
+      "parentId": "demo-a",
+      "priorityOverride": null,
+      "createdAt": "2026-11-01T00:00:00.000Z"
+    }
+  ],
+  "days": {},
+  "sleeps": {},
+  "activeSession": null,
+  "fragments": [
+    { "id": "demo-f1", "title": "示例思绪 1", "context": "脱敏样例", "state": "inbox", "createdAt": "2026-11-01T00:00:00.000Z", "dayKey": "2026-11-01" },
+    { "id": "demo-f2", "title": "示例思绪 2", "context": "general", "state": "assigned", "createdAt": "2026-11-01T00:00:00.000Z", "dayKey": "2026-11-01" }
+  ],
+  "laterPool": [],
+  "switchLog": [],
+  "triageAck": {}
+}
