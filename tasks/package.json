@@ -1,0 +1,8 @@
+{
+  "name": "task-panel-mobile",
+  "private": true,
+  "scripts": {
+    "dev": "python3 -m http.server 8911",
+    "check": "node --check task-panel.js && node --check sw.js && node ../tests/test-mobile.mjs"
+  }
+}
